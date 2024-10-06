@@ -1,15 +1,33 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, SafeAreaView, FlatList, ScrollView, ActionSheetIOS, Platform, Modal, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Alert,
+  SafeAreaView,
+  FlatList,
+  ScrollView,
+  ActionSheetIOS,
+  Platform,
+  Modal,
+  Animated,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 
 const EditProduct = () => {
+  const [productName, setProductName] = React.useState('');
   const [price, setPrice] = React.useState('');
+  const [size, setSize] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [recentImages, setRecentImages] = React.useState([]);
   const [isModalVisible, setIsModalVisible] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
 
   React.useEffect(() => {
@@ -62,21 +80,18 @@ const EditProduct = () => {
   const launchImageLibrary = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true, // Allow multiple image selection
+      aspect: [4, 3],
       quality: 1,
     });
 
     if (!result.canceled) {
       const newImages = result.assets.map(asset => asset.uri);
       setRecentImages(prevImages => [...prevImages, ...newImages]);
-    } else {
-      Alert.alert('Image Selection Error', 'Could not pick an image. Please try again.');
     }
   };
 
   const launchCamera = async () => {
     let result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true, // Allow image editing
       aspect: [4, 3],
       quality: 1,
     });
@@ -84,26 +99,28 @@ const EditProduct = () => {
     if (!result.canceled) {
       const newImage = result.assets[0].uri;
       setRecentImages(prevImages => [newImage, ...prevImages]);
-    } else {
-      Alert.alert('Camera Error', 'Could not take a photo. Please try again.');
     }
   };
 
-  const handleSave = async () => {
-    if (!price || !description) {
-      Alert.alert('Input Error', 'Please fill in both price and description fields.');
-      return;
-    }
-
-    setIsLoading(true);
-    console.log('Product Saved', { price, description, recentImages });
-    setIsLoading(false);
+  const handleSave = () => {
+    console.log('Product Saved', { productName, price, size, description, recentImages });
     setIsModalVisible(true);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handleCloseModal = () => {
-    setIsModalVisible(false);
-    navigation.goBack();
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      setIsModalVisible(false);
+      navigation.goBack();
+    });
   };
 
   const removeRecentImage = (uri) => {
@@ -113,63 +130,97 @@ const EditProduct = () => {
   const renderImageItem = ({ item }) => (
     <View style={styles.recentImageContainer}>
       <Image source={{ uri: item }} style={styles.recentImage} />
-      <TouchableOpacity style={styles.removeRecentImageButton} onPress={() => removeRecentImage(item)} accessibilityLabel="Remove image">
+      <TouchableOpacity style={styles.removeRecentImageButton} onPress={() => removeRecentImage(item)}>
         <Text style={styles.removeRecentImageButtonText}>×</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <LinearGradient colors={['#d0f0c0', '#b0e57c', '#a0e472']} style={styles.container}>
-      <SafeAreaView>
+    <LinearGradient colors={['#FFFFFF', '#e9f5e5']} style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.innerContainer}>
           <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} accessibilityLabel="Go back">
-              <Text style={styles.backButtonText}>←</Text>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={28} color="#069906" />
             </TouchableOpacity>
             <Text style={styles.title}>Edit Product</Text>
             <View style={styles.headerSpacer} />
           </View>
 
           <View style={styles.formContainer}>
+            {/* Product Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Price</Text>
-              <TextInput
-                style={styles.input}
-                value={price}
-                onChangeText={setPrice}
-                keyboardType="numeric"
-                placeholder="Enter product price"
-                placeholderTextColor="#888"
-                accessibilityLabel="Product price input"
-              />
+              <View style={styles.inputWrapper}>
+                <FontAwesome name="shopping-bag" size={18} color="#069906" />
+                <TextInput
+                  style={styles.input}
+                  value={productName}
+                  onChangeText={setProductName}
+                  placeholder="Product Name"
+                  placeholderTextColor="#888"
+                />
+              </View>
             </View>
 
+            {/* Price */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Description</Text>
-              <TextInput
-                style={[styles.input, styles.descriptionInput]}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Enter product description"
-                placeholderTextColor="#888"
-                multiline
-                accessibilityLabel="Product description input"
-              />
+              <View style={styles.inputWrapper}>
+                <Text style={styles.pesoSign}>₱</Text>
+                <TextInput
+                  style={styles.priceInput}
+                  value={price}
+                  onChangeText={text => setPrice(text.replace(/[^0-9]/g, ''))} // Allow only numeric input
+                  keyboardType="numeric"
+                  placeholder="0.00"
+                  placeholderTextColor="#888"
+                />
+              </View>
             </View>
 
+            {/* Size */}
+            <View style={styles.inputGroup}>
+              <View style={styles.inputWrapper}>
+                <FontAwesome name="tag" size={18} color="#069906" />
+                <TextInput
+                  style={styles.input}
+                  value={size}
+                  onChangeText={setSize}
+                  placeholder="Size"
+                  placeholderTextColor="#888"
+                />
+              </View>
+            </View>
+
+            {/* Description */}
+            <View style={styles.inputGroup}>
+              <View style={styles.inputWrapper}>
+                <FontAwesome name="info-circle" size={18} color="#069906" />
+                <TextInput
+                  style={[styles.input, styles.descriptionInput]}
+                  value={description}
+                  onChangeText={setDescription}
+                  placeholder="Description"
+                  placeholderTextColor="#888"
+                  multiline
+                />
+              </View>
+            </View>
+
+            {/* Image Upload */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Image Upload</Text>
               <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={pickImage} accessibilityLabel="Pick images">
-                  <Text style={styles.buttonText}>Pick Images</Text>
+                <TouchableOpacity style={styles.gradientButton} onPress={pickImage}>
+                  <FontAwesome name="upload" size={16} color="#fff" />
+                  <Text style={styles.buttonText}> Pick Images</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Recent Images Section */}
+            {/* Recent Images */}
             <View style={styles.recentImagesContainer}>
-              <Text style={styles.label}>Recent Uploads</Text>
+              <Text style={styles.label}>Recent Images</Text>
               <FlatList
                 data={recentImages}
                 renderItem={renderImageItem}
@@ -179,31 +230,29 @@ const EditProduct = () => {
               />
             </View>
 
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={isLoading}>
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.saveButtonText}>Save Product</Text>
-              )}
+            {/* Save Button */}
+            <TouchableOpacity style={styles.gradientButton} onPress={handleSave}>
+              <Text style={styles.buttonText}>Save Product</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
 
+        {/* Success Modal */}
         <Modal
           visible={isModalVisible}
           transparent
           animationType="fade"
           onRequestClose={handleCloseModal}
         >
-          <View style={styles.modalBackdrop}>
+          <Animated.View style={[styles.modalBackdrop, { opacity: fadeAnim }]}>
             <View style={styles.modalContent}>
               <Text style={styles.modalHeader}>Success</Text>
-              <Text style={styles.modalText}>Product has been saved successfully!</Text>
-              <TouchableOpacity style={styles.modalButton} onPress={handleCloseModal} accessibilityLabel="Close modal">
+              <Text style={styles.modalText}>Product added successfully!</Text>
+              <TouchableOpacity style={styles.modalButton} onPress={handleCloseModal}>
                 <Text style={styles.modalButtonText}>Okay</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </Modal>
       </SafeAreaView>
     </LinearGradient>
@@ -214,6 +263,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   innerContainer: {
     padding: 20,
   },
@@ -221,77 +274,77 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
-    paddingBottom: 10,
   },
   backButton: {
-    marginRight: 12,
-  },
-  backButtonText: {
-    fontSize: 28,
-    color: '#069906',
-    fontWeight: '700',
+    marginRight: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#069906',
-    textAlign: 'center',
-    flex: 1,
   },
   headerSpacer: {
-    width: 32,
+    flex: 1,
   },
   formContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#fafafa',
     borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    padding: 15,
+    elevation: 4,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 15,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    paddingVertical: 5,
+  },
+  input: {
+    flex: 1,
+    padding: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  priceInput: {
+    flex: 1,
+    padding: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  pesoSign: {
+    fontSize: 16,
+    color: '#069906',
+    marginRight: 10,
+  },
+  descriptionInput: {
+    height: 100,
+    textAlignVertical: 'top',
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#555',
-    marginBottom: 6,
-  },
-  input: {
-    height: 45,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#fafafa',
-    fontSize: 16,
-  },
-  descriptionInput: {
-    height: 120,
-    textAlignVertical: 'top',
+    marginBottom: 5,
   },
   buttonContainer: {
-    marginVertical: 12,
+    marginBottom: 15,
   },
-  button: {
+  gradientButton: {
     backgroundColor: '#069906',
     borderRadius: 8,
-    paddingVertical: 12,
+    padding: 12,
     alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
   },
   recentImagesContainer: {
-    marginVertical: 12,
+    marginBottom: 15,
   },
   recentImageContainer: {
-    position: 'relative',
     marginRight: 10,
   },
   recentImage: {
@@ -301,27 +354,15 @@ const styles = StyleSheet.create({
   },
   removeRecentImageButton: {
     position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(255, 0, 0, 0.7)',
     borderRadius: 15,
-    padding: 5,
+    padding: 2,
   },
   removeRecentImageButtonText: {
-    color: '#ff0000',
-    fontWeight: 'bold',
-  },
-  saveButton: {
-    backgroundColor: '#069906',
-    borderRadius: 8,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  saveButtonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
   },
   modalBackdrop: {
     flex: 1,
@@ -330,34 +371,34 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '80%',
-    padding: 20,
     backgroundColor: '#fff',
     borderRadius: 12,
+    padding: 20,
     alignItems: 'center',
-    elevation: 10,
+    width: '80%',
   },
   modalHeader: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#069906',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   modalText: {
     fontSize: 16,
-    color: '#555',
-    marginBottom: 20,
+    color: '#333',
     textAlign: 'center',
+    marginBottom: 20,
   },
   modalButton: {
     backgroundColor: '#069906',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    width: '100%',
   },
   modalButtonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontSize: 16,
   },
 });
 

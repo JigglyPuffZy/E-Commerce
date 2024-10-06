@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Modal } from 'react-native';
 import React, { useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons'; 
 import { useNavigation } from '@react-navigation/native'; 
@@ -7,10 +7,21 @@ export default function ChangePassword() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const navigation = useNavigation(); 
 
   const handleBackButtonPress = () => {
+    navigation.goBack(); 
+  };
+
+  const handleSave = () => {
+    // Trigger save logic here
+    setModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
     navigation.goBack(); 
   };
 
@@ -66,8 +77,30 @@ export default function ChangePassword() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Save Button */}
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <Text style={styles.saveButtonText}>Save</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Modal */}
+      <Modal
+        transparent={true}
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Save Successfully!</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={handleModalClose}>
+              <Text style={styles.modalButtonText}>Okay</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -121,5 +154,49 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 8,
+  },
+  saveButton: {
+    backgroundColor: '#069906',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+    elevation: 5,
+  },
+  saveButtonText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: 300,
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 24,
+    color: '#069906',
+  },
+  modalButton: {
+    backgroundColor: '#069906',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    elevation: 5,
+  },
+  modalButtonText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });

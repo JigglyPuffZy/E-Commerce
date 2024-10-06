@@ -2,6 +2,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Animated } from 'react
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 
+
 const Colors = {
   background: '#f8f8f8',
   text: '#333',
@@ -15,6 +16,7 @@ export default function Login() {
   const opacityAnim = useRef(new Animated.Value(1)).current;
   const [animationCompleted, setAnimationCompleted] = useState(false);
 
+  
   const handleGetStarted = () => {
     Animated.parallel([
       Animated.timing(scaleAnim, {
@@ -22,6 +24,7 @@ export default function Login() {
         duration: 500,
         useNativeDriver: true,
       }),
+    
       Animated.timing(opacityAnim, {
         toValue: 0,
         duration: 500,

@@ -5,12 +5,13 @@ import { FontAwesome } from '@expo/vector-icons';
 
 export default function Settings() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
+  const [saveModalVisible, setSaveModalVisible] = useState(false);
+  const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false); // New state for logout confirmation
   const router = useRouter();
   const [opacity] = useState(new Animated.Value(0));
 
   const handleLogout = () => {
-    setLogoutConfirmVisible(true); // Show confirmation modal
+    setLogoutConfirmVisible(true); // Show confirmation modal instead
   };
 
   const handleConfirmLogout = () => {
@@ -40,10 +41,10 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    if (modalVisible || logoutConfirmVisible) {
+    if (modalVisible || saveModalVisible || logoutConfirmVisible) {
       animateModal();
     }
-  }, [modalVisible, logoutConfirmVisible]);
+  }, [modalVisible, saveModalVisible, logoutConfirmVisible]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -60,8 +61,15 @@ export default function Settings() {
             <Text style={styles.listItemText}>Change Password</Text>
             <Text style={styles.arrow}>&gt;</Text>
           </TouchableOpacity>
+
           <TouchableOpacity onPress={() => router.push('auth/contactus')} style={styles.listItem}>
             <Text style={styles.listItemText}>Contact Us</Text>
+            <Text style={styles.arrow}>&gt;</Text>
+          </TouchableOpacity>
+
+          {/* Seller Info Button */}
+          <TouchableOpacity onPress={() => router.push('auth/sellerinfo')} style={styles.listItem}>
+            <Text style={styles.listItemText}>Seller Info</Text>
             <Text style={styles.arrow}>&gt;</Text>
           </TouchableOpacity>
         </View>
@@ -93,6 +101,18 @@ export default function Settings() {
             <Animated.View style={[styles.modalContent, { opacity }]}>
               <Text style={styles.modalText}>Successfully logged out</Text>
               <TouchableOpacity style={styles.modalButton} onPress={handleCloseModal}>
+                <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </SafeAreaView>
+        </Modal>
+
+        {/* Save Changes Modal */}
+        <Modal transparent={true} animationType="fade" visible={saveModalVisible} onRequestClose={() => setSaveModalVisible(false)}>
+          <SafeAreaView style={styles.modalContainer}>
+            <Animated.View style={[styles.modalContent, { opacity }]}>
+              <Text style={styles.modalText}>Successfully saved changes</Text>
+              <TouchableOpacity style={styles.modalButton} onPress={() => setSaveModalVisible(false)}>
                 <Text style={styles.modalButtonText}>OK</Text>
               </TouchableOpacity>
             </Animated.View>

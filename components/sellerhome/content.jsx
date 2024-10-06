@@ -60,7 +60,7 @@ export default function SellerDashboard() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Seller Dashboard</Text>
-        <TouchableOpacity onPress={() => router.push('/auth/settings')} style={styles.settingsButton}>
+        <TouchableOpacity onPress={() => router.push('/auth/sellersettings')} style={styles.settingsButton}>
           <FontAwesome name="cog" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -180,6 +180,15 @@ export default function SellerDashboard() {
               <FontAwesome name="eye" size={18} color="#fff" />
               <Text style={styles.actionButtonText}> View Product</Text>
             </TouchableOpacity>
+            {/* New My Orders Button */}
+            <TouchableOpacity
+              onPress={() => router.push('auth/myorder')}
+              style={styles.actionButton}
+              activeOpacity={0.8}
+            >
+              <FontAwesome name="list" size={18} color="#fff" />
+              <Text style={styles.actionButtonText}> My Orders</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -205,68 +214,70 @@ const chartConfig = {
     strokeWidth: 1,
     stroke: '#e3e3e3',
   },
-  fillShadowGradient: '#43A047',
-  fillShadowGradientOpacity: 1,
+  fillShadowGradientFrom: '#069906',
+  fillShadowGradientFromOpacity: 0.5,
+  fillShadowGradientTo: '#069906',
+  fillShadowGradientToOpacity: 0.5,
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f0f0f0',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: '#069906',
-    padding: 15,
-    elevation: 5,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   headerTitle: {
-    fontSize: 20,
     color: '#fff',
+    fontSize: 24,
     fontWeight: 'bold',
   },
   settingsButton: {
-    padding: 5,
+    backgroundColor: '#069906',
+    padding: 10,
+    borderRadius: 10,
   },
   container: {
-    padding: 10,
     alignItems: 'center',
+    paddingBottom: 16,
   },
   section: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    elevation: 3,
-    marginVertical: 10,
-    padding: 15,
-    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    width: '90%',
+    elevation: 2,
+    top:20,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  chart: {
-    marginVertical: 8,
-    borderRadius: 8,
-  },
   summaryBox: {
     marginTop: 10,
+    alignItems: 'center',
+    
   },
   summaryText: {
     fontSize: 16,
-    marginVertical: 2,
+    marginVertical: 5,
   },
   modalButton: {
-    backgroundColor: '#069906',
-    borderRadius: 5,
-    padding: 10,
     marginTop: 10,
-    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#069906',
+    borderRadius: 10,
   },
   modalButtonText: {
     color: '#fff',
+    textAlign: 'center',
     fontWeight: 'bold',
   },
   modalOverlay: {
@@ -276,11 +287,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '80%',
     backgroundColor: '#fff',
-    borderRadius: 10,
     padding: 20,
-    elevation: 5,
+    borderRadius: 10,
+    width: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -288,8 +298,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
+    color: '#069906',
   },
   modalText: {
     marginVertical: 10,
@@ -298,44 +309,46 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   detailText: {
-    marginVertical: 2,
+    fontSize: 16,
   },
   closeButton: {
-    backgroundColor: '#069906',
-    borderRadius: 5,
+    marginTop: 20,
     padding: 10,
-    marginTop: 10,
-    alignItems: 'center',
+    backgroundColor: '#069906',
+    borderRadius: 10,
   },
   closeButtonText: {
     color: '#fff',
+    textAlign: 'center',
     fontWeight: 'bold',
-  },
-  orderBox: {
-    marginTop: 10,
-  },
-  orderText: {
-    fontSize: 16,
-    marginVertical: 2,
   },
   actionsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    width: '100%',
     marginTop: 10,
   },
   actionButton: {
     flexDirection: 'row',
     backgroundColor: '#069906',
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    width: '45%',
+    flex: 1,
+    marginHorizontal: 5,
   },
   actionButtonText: {
     color: '#fff',
     marginLeft: 5,
     fontWeight: 'bold',
   },
+  orderBox: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  orderText: {
+    fontSize: 16,
+    marginVertical: 5,
+  },
 });
-
