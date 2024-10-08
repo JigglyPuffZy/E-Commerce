@@ -16,9 +16,10 @@ import {
   Animated,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EditProduct = () => {
   const [productName, setProductName] = React.useState('');
@@ -29,6 +30,8 @@ const EditProduct = () => {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
+  const route = useRoute();
+  const editingProduct = route.params?.product;
 
   React.useEffect(() => {
     const requestPermissions = async () => {
@@ -38,7 +41,15 @@ const EditProduct = () => {
       }
     };
     requestPermissions();
-  }, []);
+
+    if (editingProduct) {
+      setProductName(editingProduct.productName);
+      setPrice(editingProduct.price.toString());
+      setSize(editingProduct.size);
+      setDescription(editingProduct.description);
+      setRecentImages(editingProduct.images.map((uri, index) => ({ id: `${editingProduct.id}-${index}`, uri })));
+    }
+  }, [editingProduct]);
 
   const pickImage = () => {
     if (Platform.OS === 'ios') {
@@ -85,7 +96,7 @@ const EditProduct = () => {
     });
 
     if (!result.canceled) {
-      const newImages = result.assets.map(asset => asset.uri);
+      const newImages = result.assets.map(asset => ({ id: Date.now().toString() + Math.random().toString(36).substr(2, 9), uri: asset.uri }));
       setRecentImages(prevImages => [...prevImages, ...newImages]);
     }
   };
@@ -97,13 +108,40 @@ const EditProduct = () => {
     });
 
     if (!result.canceled) {
-      const newImage = result.assets[0].uri;
+      const newImage = { id: Date.now().toString() + Math.random().toString(36).substr(2, 9), uri: result.assets[0].uri };
       setRecentImages(prevImages => [newImage, ...prevImages]);
     }
   };
 
-  const handleSave = () => {
-    console.log('Product Saved', { productName, price, size, description, recentImages });
+  const saveProductToStorage = async (product) => {
+    try {
+      const existingProducts = await AsyncStorage.getItem('products');
+      let products = existingProducts ? JSON.parse(existingProducts) : [];
+      if (editingProduct) {
+        const index = products.findIndex(p => p.id === editingProduct.id);
+        if (index !== -1) {
+          products[index] = product;
+        }
+      } else {
+        products.push(product);
+      }
+      await AsyncStorage.setItem('products', JSON.stringify(products));
+    } catch (error) {
+      console.error('Error saving product:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    const newProduct = { 
+      id: editingProduct?.id || Date.now().toString(),
+      productName, 
+      price: parseFloat(price), 
+      size, 
+      description, 
+      images: recentImages.map(img => img.uri)
+    };
+    await saveProductToStorage(newProduct);
+    console.log('Product Saved', newProduct);
     setIsModalVisible(true);
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -123,14 +161,14 @@ const EditProduct = () => {
     });
   };
 
-  const removeRecentImage = (uri) => {
-    setRecentImages(prevImages => prevImages.filter(imageUri => imageUri !== uri));
+  const removeRecentImage = (id) => {
+    setRecentImages(prevImages => prevImages.filter(image => image.id !== id));
   };
 
   const renderImageItem = ({ item }) => (
     <View style={styles.recentImageContainer}>
-      <Image source={{ uri: item }} style={styles.recentImage} />
-      <TouchableOpacity style={styles.removeRecentImageButton} onPress={() => removeRecentImage(item)}>
+      <Image source={{ uri: item.uri }} style={styles.recentImage} />
+      <TouchableOpacity style={styles.removeRecentImageButton} onPress={() => removeRecentImage(item.id)}>
         <Text style={styles.removeRecentImageButtonText}>×</Text>
       </TouchableOpacity>
     </View>
@@ -144,7 +182,7 @@ const EditProduct = () => {
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={28} color="#069906" />
             </TouchableOpacity>
-            <Text style={styles.title}>Edit Product</Text>
+            <Text style={styles.title}>{editingProduct ? 'Edit Product' : 'Add Product'}</Text>
             <View style={styles.headerSpacer} />
           </View>
 
@@ -170,7 +208,7 @@ const EditProduct = () => {
                 <TextInput
                   style={styles.priceInput}
                   value={price}
-                  onChangeText={text => setPrice(text.replace(/[^0-9]/g, ''))} // Allow only numeric input
+                  onChangeText={text => setPrice(text.replace(/[^0-9.]/g, ''))}
                   keyboardType="numeric"
                   placeholder="0.00"
                   placeholderTextColor="#888"
@@ -224,7 +262,7 @@ const EditProduct = () => {
               <FlatList
                 data={recentImages}
                 renderItem={renderImageItem}
-                keyExtractor={(item, index) => index.toString()}
+                keyExtractor={(item) => item.id}
                 horizontal
                 showsHorizontalScrollIndicator={false}
               />
@@ -232,7 +270,7 @@ const EditProduct = () => {
 
             {/* Save Button */}
             <TouchableOpacity style={styles.gradientButton} onPress={handleSave}>
-              <Text style={styles.buttonText}>Save Product</Text>
+              <Text style={styles.buttonText}>{editingProduct ? 'Update Product' : 'Save Product'}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -247,7 +285,7 @@ const EditProduct = () => {
           <Animated.View style={[styles.modalBackdrop, { opacity: fadeAnim }]}>
             <View style={styles.modalContent}>
               <Text style={styles.modalHeader}>Success</Text>
-              <Text style={styles.modalText}>Product added successfully!</Text>
+              <Text style={styles.modalText}>{editingProduct ? 'Product updated successfully!' : 'Product added successfully!'}</Text>
               <TouchableOpacity style={styles.modalButton} onPress={handleCloseModal}>
                 <Text style={styles.modalButtonText}>Okay</Text>
               </TouchableOpacity>
@@ -258,7 +296,6 @@ const EditProduct = () => {
     </LinearGradient>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

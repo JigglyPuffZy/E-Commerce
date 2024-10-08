@@ -1,7 +1,11 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image, Modal, ScrollView } from 'react-native';
 import React, { useState } from 'react';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image, Modal, ScrollView, Dimensions } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+
+const { width } = Dimensions.get('window');
 
 export default function PaymentPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('COD');
@@ -9,142 +13,143 @@ export default function PaymentPage() {
   const router = useRouter();
 
   const items = [
-    { id: 1, name: "Banga", price: 67.00, originalPrice: 77.00 },
-    { id: 2, name: "Banga", price: 46.00, originalPrice: 65.00 },
+    { id: 1, name: "Premium Dog Bowl", price: 67.00, originalPrice: 77.00, image: 'https://example.com/dog-bowl.jpg' },
+    { id: 2, name: "Luxury Cat Feeder", price: 46.00, originalPrice: 65.00, image: 'https://example.com/cat-feeder.jpg' },
   ];
 
-  const calculateSubtotal = () => items.reduce((sum, item) => sum + item.price, 0);
-  const subtotal = calculateSubtotal();
+  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
   const shippingFee = 50.00;
   const total = subtotal + shippingFee;
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Header with Back Button */}
-        <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <FontAwesome name="arrow-left" size={24} color="#069906" />
-          </TouchableOpacity>
-          <Text style={styles.header}>Checkout</Text>
-        </View>
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <FontAwesome5 name="chevron-left" size={24} color="#4a90e2" />
+      </TouchableOpacity>
+      <Text style={styles.header}>Checkout</Text>
+    </View>
+  );
 
-        {/* Delivery Address Section */}
-        <View style={styles.section}>
-          <Text style={styles.subHeader}>Delivery Address</Text>
-          <View style={styles.addressContainer}>
-            <Text style={styles.mutedText}>Address</Text>
-            <Text style={styles.boldText}>Sally Gatan</Text>
-            <Text>Purok 6, Mozzozzin sur, Santa Maria Isabela</Text>
-            <Text>Mobile: +96-012 3445 44</Text>
-            <TouchableOpacity onPress={() => router.push('auth/addressselection')}>
-              <Text style={styles.linkText}>Edit</Text>
-            </TouchableOpacity>
-          </View>
+  const renderAddress = () => (
+    <View style={styles.section}>
+      <Text style={styles.subHeader}>Delivery Address</Text>
+      <View style={styles.addressContainer}>
+        <FontAwesome5 name="map-marker-alt" size={20} color="#4a90e2" style={styles.icon} />
+        <View style={styles.addressDetails}>
+          <Text style={styles.boldText}>Sally Gatan</Text>
+          <Text style={styles.addressText}>Purok 6, Mozzozzin sur, Santa Maria Isabela</Text>
+          <Text style={styles.addressText}>Mobile: +96-012 3445 44</Text>
         </View>
+        <TouchableOpacity onPress={() => router.push('auth/addressselection')} style={styles.editButton}>
+          <FontAwesome5 name="edit" size={16} color="#4a90e2" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
-        {/* Shopping List Section */}
-        <Text style={styles.subHeader}>Shopping List</Text>
-        {items.map(item => (
-          <View key={item.id} style={styles.itemContainer}>
-            <Image
-              source={{ uri: 'https://i.pinimg.com/236x/bd/2f/91/bd2f91891f7f4cb44da0473401273fd7.jpg' }}
-              style={styles.itemImage}
-            />
-            <View style={styles.itemDetails}>
-              <Text style={styles.boldText}>{item.name}</Text>
-              <Text style={styles.mutedText}>Variation: {item.name.includes('Banga') ? 'Kainan ng Aso' : 'Kainan ng Pusa'}</Text>
-              <Text style={styles.boldText}>
-                ₱{item.price.toFixed(2)} <Text style={styles.lineThrough}>₱{item.originalPrice.toFixed(2)}</Text>
-              </Text>
+  const renderItems = () => (
+    <View style={styles.section}>
+      <Text style={styles.subHeader}>Order Summary</Text>
+      {items.map(item => (
+        <View key={item.id} style={styles.itemContainer}>
+          <Image source={{ uri: item.image }} style={styles.itemImage} />
+          <View style={styles.itemDetails}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            <Text style={styles.mutedText}>Variation: {item.name.includes('Dog') ? 'For Dogs' : 'For Cats'}</Text>
+            <View style={styles.priceContainer}>
+              <Text style={styles.currentPrice}>₱{item.price.toFixed(2)}</Text>
+              <Text style={styles.originalPrice}>₱{item.originalPrice.toFixed(2)}</Text>
             </View>
           </View>
+        </View>
+      ))}
+      <Text style={styles.totalOrderText}>Total Items: {items.length}</Text>
+    </View>
+  );
+
+  const renderPaymentMethods = () => (
+    <View style={styles.section}>
+      <Text style={styles.subHeader}>Payment Method</Text>
+      <View style={styles.paymentMethodsContainer}>
+        {['COD', 'GCash'].map((method) => (
+          <TouchableOpacity
+            key={method}
+            style={[
+              styles.paymentMethodButton,
+              selectedPaymentMethod === method && styles.paymentMethodButtonSelected
+            ]}
+            onPress={() => setSelectedPaymentMethod(method)}
+          >
+            <FontAwesome5 
+              name={method === 'COD' ? 'money-bill-wave' : 'mobile-alt'} 
+              size={20} 
+              color={selectedPaymentMethod === method ? '#fff' : '#4a90e2'} 
+            />
+            <Text style={[
+              styles.paymentMethodText,
+              selectedPaymentMethod === method && styles.paymentMethodTextSelected
+            ]}>{method === 'COD' ? 'Cash on Delivery' : 'GCash'}</Text>
+          </TouchableOpacity>
         ))}
-        <Text style={styles.mutedText}>Total Order ({items.length}): ₱{subtotal.toFixed(2)}</Text>
+      </View>
+    </View>
+  );
 
-        {/* Payment Method Section */}
-        <View style={styles.section}>
-          <Text style={styles.subHeader}>Payment Method</Text>
-          <View style={styles.paymentMethodsContainer}>
-            <TouchableOpacity
-              style={[
-                styles.paymentMethodButton,
-                selectedPaymentMethod === 'COD' && styles.paymentMethodButtonSelected
-              ]}
-              onPress={() => setSelectedPaymentMethod('COD')}
-            >
-              <Text style={[
-                styles.paymentMethodText,
-                selectedPaymentMethod === 'COD' && styles.paymentMethodTextSelected
-              ]}>Cash on Delivery (COD)</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.paymentMethodButton,
-                selectedPaymentMethod === 'GCash' && styles.paymentMethodButtonSelected
-              ]}
-              onPress={() => setSelectedPaymentMethod('GCash')}
-            >
-              <Text style={[
-                styles.paymentMethodText,
-                selectedPaymentMethod === 'GCash' && styles.paymentMethodTextSelected
-              ]}>GCash</Text>
-            </TouchableOpacity>
-          </View>
+  const renderSummary = () => (
+    <View style={styles.summarySection}>
+      {[
+        { label: 'Subtotal', value: subtotal },
+        { label: 'Shipping Fee', value: shippingFee },
+        { label: 'Total', value: total, isBold: true }
+      ].map((item, index) => (
+        <View key={index} style={styles.summaryItem}>
+          <Text style={item.isBold ? styles.boldText : styles.mutedText}>{item.label}</Text>
+          <Text style={item.isBold ? [styles.boldText, styles.totalAmount] : styles.mutedText}>₱{item.value.toFixed(2)}</Text>
         </View>
+      ))}
+    </View>
+  );
 
-        {/* Order Summary Section */}
-        <View style={styles.summarySection}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.mutedText}>Subtotal:</Text>
-            <Text style={styles.mutedText}>₱{subtotal.toFixed(2)}</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.mutedText}>Shipping Fee:</Text>
-            <Text style={styles.mutedText}>₱{shippingFee.toFixed(2)}</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.boldText}>Total:</Text>
-            <Text style={styles.boldText}>₱{total.toFixed(2)}</Text>
-          </View>
-        </View>
-
-        {/* Checkout Button */}
-        <View style={styles.buttonContainer}>
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={['#f0f8ff', '#e6f3ff']} style={styles.gradient}>
+        <ScrollView contentContainerStyle={styles.container}>
+          {renderHeader()}
+          {renderAddress()}
+          {renderItems()}
+          {renderPaymentMethods()}
+          {renderSummary()}
           <TouchableOpacity 
             style={styles.checkoutButton}
             onPress={() => setModalVisible(true)}
           >
-            <Text style={styles.checkoutButtonText}>Checkout</Text>
+            <Text style={styles.checkoutButtonText}>Place Order</Text>
           </TouchableOpacity>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </LinearGradient>
 
-      {/* Logout Confirmation Modal */}
-      <Modal transparent={true} visible={modalVisible} animationType="slide">
-        <View style={styles.modalOverlay}>
+      <Modal transparent={true} visible={modalVisible} animationType="fade">
+        <BlurView intensity={100} style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Confirm Checkout</Text>
-            <Text style={styles.modalMessage}>Are you sure you want to checkout?</Text>
+            <FontAwesome5 name="shopping-cart" size={50} color="#4a90e2" style={styles.modalIcon} />
+            <Text style={styles.modalTitle}>Confirm Order</Text>
+            <Text style={styles.modalMessage}>Are you ready to complete your purchase?</Text>
             <View style={styles.modalButtonContainer}>
-              <TouchableOpacity 
-                style={styles.modalButton}
-                onPress={() => {
-                  setModalVisible(false);
-                  router.push('auth/pay');
-                }}
-              >
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.modalButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>No</Text>
-              </TouchableOpacity>
+              {['Confirm', 'Cancel'].map((option) => (
+                <TouchableOpacity 
+                  key={option}
+                  style={[styles.modalButton, option === 'Cancel' && styles.modalButtonSecondary]}
+                  onPress={() => {
+                    setModalVisible(false);
+                    if (option === 'Confirm') router.push('auth/pay');
+                  }}
+                >
+                  <Text style={[styles.modalButtonText, option === 'Cancel' && styles.modalButtonTextSecondary]}>{option}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
-        </View>
+        </BlurView>
       </Modal>
     </SafeAreaView>
   );
@@ -155,160 +160,215 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9f9f9',
   },
+  gradient: {
+    flex: 1,
+  },
   container: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 5 },
+    padding: 20,
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    // Removed background color to have a transparent header
+    marginBottom: 20,
   },
   backButton: {
-    padding: 8,
-    marginRight: 16,
+    padding: 10,
   },
   header: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#28a745', // Optional: Change text color if needed
-    flex: 1,
-    right:10,
+    color: '#333',
+    marginLeft: 15,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 25,
   },
   subHeader: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 15,
     color: '#333',
   },
   addressContainer: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 16,
-    backgroundColor: '#f7f7f7',
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  mutedText: {
-    color: '#6c757d',
+  icon: {
+    marginRight: 15,
+    alignSelf: 'center',
+  },
+  addressDetails: {
+    flex: 1,
   },
   boldText: {
     fontWeight: 'bold',
     color: '#333',
     fontSize: 16,
+    marginBottom: 5,
   },
-  linkText: {
-    color: '#007bff',
-    marginTop: 8,
-    textDecorationLine: 'underline',
-    fontWeight: '500',
+  addressText: {
+    color: '#666',
+    marginBottom: 2,
+  },
+  editButton: {
+    padding: 5,
   },
   itemContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
   itemImage: {
-    width: 60,
-    height: 60,
-    marginRight: 16,
-    borderRadius: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 15,
   },
   itemDetails: {
     flex: 1,
+    justifyContent: 'space-between',
   },
-  lineThrough: {
+  itemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+  },
+  mutedText: {
+    color: '#888',
+    fontSize: 14,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  currentPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4a90e2',
+    marginRight: 10,
+  },
+  originalPrice: {
+    fontSize: 14,
+    color: '#888',
     textDecorationLine: 'line-through',
-    color: '#6c757d',
+  },
+  totalOrderText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4a90e2',
+    marginTop: 10,
   },
   paymentMethodsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
   },
   paymentMethodButton: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    backgroundColor: '#e9ecef',
-    borderRadius: 10,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 8,
-    elevation: 2,
-  },
-  paymentMethodButtonSelected: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 15,
+    flex: 1,
+    marginHorizontal: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
+  paymentMethodButtonSelected: {
+    backgroundColor: '#4a90e2',
+  },
   paymentMethodText: {
+    marginLeft: 10,
+    fontSize: 16,
     color: '#333',
-    fontWeight: '500',
   },
   paymentMethodTextSelected: {
     color: '#fff',
   },
   summarySection: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 16,
-    backgroundColor: '#f7f7f7',
-    marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   summaryItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  buttonContainer: {
-    marginTop: 24,
+  totalAmount: {
+    color: '#4a90e2',
+    fontSize: 18,
   },
   checkoutButton: {
-    backgroundColor: '#28a745',
-    paddingVertical: 12,
-    borderRadius: 10,
+    backgroundColor: '#4a90e2',
+    paddingVertical: 15,
+    borderRadius: 25,
     alignItems: 'center',
-    elevation: 3,
+    shadowColor: '#4a90e2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   checkoutButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 18,
+    fontWeight: 'bold',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
-    width: '80%',
+    width: width * 0.8,
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
+    borderRadius: 20,
+    padding: 25,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     elevation: 5,
   },
+  modalIcon: {
+    marginBottom: 20,
+  },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#333',
   },
   modalMessage: {
+    fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
+    color: '#666',
   },
   modalButtonContainer: {
     flexDirection: 'row',
@@ -316,15 +376,23 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modalButton: {
-    backgroundColor: '#28a745',
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    alignItems: 'center',
-    marginHorizontal: 5,
+    backgroundColor: '#4a90e2',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginHorizontal: 10,
+  },
+  modalButtonSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#4a90e2',
   },
   modalButtonText: {
     color: '#fff',
+    fontSize: 16,
     fontWeight: 'bold',
+  },
+  modalButtonTextSecondary: {
+    color: '#4a90e2',
   },
 });

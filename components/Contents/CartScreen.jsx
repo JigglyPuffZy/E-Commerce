@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert, Dimensions } from 'react-native';
-import CustomCheckbox from '../../components/checkbox/customcheckbox'; // Ensure CustomCheckbox is correctly implemented
+import CustomCheckbox from '../../components/checkbox/customcheckbox'; 
 import { useRouter } from 'expo-router';
 
 export default function Widget() {

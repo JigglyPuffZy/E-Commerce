@@ -1,7 +1,8 @@
-import { View, Text, TouchableOpacity, StyleSheet, Modal, SafeAreaView, Animated } from 'react-native';
 import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, SafeAreaView, Animated, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Settings() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -9,27 +10,17 @@ export default function Settings() {
   const router = useRouter();
   const [opacity] = useState(new Animated.Value(0));
 
-  const handleLogout = () => {
-    setLogoutConfirmVisible(true); // Show confirmation modal
-  };
-
+  const handleLogout = () => setLogoutConfirmVisible(true);
   const handleConfirmLogout = () => {
     setLogoutConfirmVisible(false);
-    setModalVisible(true); // Show the logout success modal
+    setModalVisible(true);
   };
-
-  const handleCancelLogout = () => {
-    setLogoutConfirmVisible(false); // Close confirmation modal
-  };
-
+  const handleCancelLogout = () => setLogoutConfirmVisible(false);
   const handleCloseModal = () => {
     setModalVisible(false);
     router.push('auth/sign-in');
   };
-
-  const handleBackButtonPress = () => {
-    router.back();
-  };
+  const handleBackButtonPress = () => router.back();
 
   const animateModal = () => {
     Animated.timing(opacity, {
@@ -40,93 +31,94 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    if (modalVisible || logoutConfirmVisible) {
-      animateModal();
-    }
+    if (modalVisible || logoutConfirmVisible) animateModal();
   }, [modalVisible, logoutConfirmVisible]);
+
+  const SettingItem = ({ icon, title, onPress }) => (
+    <TouchableOpacity style={styles.listItem} onPress={onPress}>
+      <View style={styles.listItemContent}>
+        <FontAwesome5 name={icon} size={20} color="#069906" />
+        <Text style={styles.listItemText}>{title}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={24} color="#069906" />
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackButtonPress}>
-            <FontAwesome name="arrow-left" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Settings</Text>
-        </View>
-
+      <LinearGradient colors={['#069906', '#05700500']} style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBackButtonPress}>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Settings</Text>
+      </LinearGradient>
+      
+      <ScrollView style={styles.content}>
         <View style={styles.listContainer}>
-          <TouchableOpacity onPress={() => router.push('auth/changepass')} style={styles.listItem}>
-            <Text style={styles.listItemText}>Change Password</Text>
-            <Text style={styles.arrow}>&gt;</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('auth/contactus')} style={styles.listItem}>
-            <Text style={styles.listItemText}>Contact Us</Text>
-            <Text style={styles.arrow}>&gt;</Text>
-          </TouchableOpacity>
+          <SettingItem icon="key" title="Change Password" onPress={() => router.push('auth/changepass')} />
+          <SettingItem icon="envelope" title="Contact Us" onPress={() => router.push('auth/contactus')} />
         </View>
 
-        <TouchableOpacity onPress={handleLogout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <FontAwesome5 name="sign-out-alt" size={20} color="#FFFFFF" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
+      </ScrollView>
 
-        {/* Logout Confirmation Modal */}
-        <Modal transparent={true} animationType="fade" visible={logoutConfirmVisible} onRequestClose={handleCancelLogout}>
-          <SafeAreaView style={styles.modalContainer}>
-            <Animated.View style={[styles.modalContent, { opacity }]}>
-              <Text style={styles.modalText}>Are you sure you want to logout?</Text>
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity style={styles.modalButton} onPress={handleConfirmLogout}>
-                  <Text style={styles.modalButtonText}>Yes</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.modalButton} onPress={handleCancelLogout}>
-                  <Text style={styles.modalButtonText}>No</Text>
-                </TouchableOpacity>
-              </View>
-            </Animated.View>
-          </SafeAreaView>
-        </Modal>
-
-        {/* Logout Modal */}
-        <Modal transparent={true} animationType="fade" visible={modalVisible} onRequestClose={handleCloseModal}>
-          <SafeAreaView style={styles.modalContainer}>
-            <Animated.View style={[styles.modalContent, { opacity }]}>
-              <Text style={styles.modalText}>Successfully logged out</Text>
-              <TouchableOpacity style={styles.modalButton} onPress={handleCloseModal}>
-                <Text style={styles.modalButtonText}>OK</Text>
+      <Modal transparent={true} animationType="fade" visible={logoutConfirmVisible} onRequestClose={handleCancelLogout}>
+        <SafeAreaView style={styles.modalContainer}>
+          <Animated.View style={[styles.modalContent, { opacity }]}>
+            <Text style={styles.modalText}>Are you sure you want to logout?</Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={handleConfirmLogout}>
+                <Text style={styles.modalButtonText}>Yes</Text>
               </TouchableOpacity>
-            </Animated.View>
-          </SafeAreaView>
-        </Modal>
-      </View>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={handleCancelLogout}>
+                <Text style={styles.modalButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </SafeAreaView>
+      </Modal>
+
+      <Modal transparent={true} animationType="fade" visible={modalVisible} onRequestClose={handleCloseModal}>
+        <SafeAreaView style={styles.modalContainer}>
+          <Animated.View style={[styles.modalContent, { opacity }]}>
+            <FontAwesome5 name="check-circle" size={50} color="#069906" style={styles.modalIcon} />
+            <Text style={styles.modalText}>Successfully logged out</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={handleCloseModal}>
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F7F6',
   },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    padding: 16,
+    paddingTop: 40,
   },
   backButton: {
     padding: 8,
-    backgroundColor: '#069906', // Background color for the back button
     borderRadius: 50,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#069906',
+    color: '#FFFFFF',
     marginLeft: 12,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
   },
   listContainer: {
     marginBottom: 16,
@@ -140,28 +132,34 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  listItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   listItemText: {
     fontSize: 18,
-    color: '#3D3D3D',
+    color: '#333',
+    marginLeft: 16,
   },
-  arrow: {
-    fontSize: 18,
-    color: '#069906',
+  logoutButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#D95D5D',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 20,
   },
   logoutText: {
-    color: '#D95D5D',
-    textAlign: 'center',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 12,
+    marginLeft: 10,
   },
   modalContainer: {
     flex: 1,
@@ -173,11 +171,14 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#FFFFFF',
     padding: 24,
-    borderRadius: 12,
+    borderRadius: 20,
     alignItems: 'center',
     width: '90%',
     maxWidth: 400,
     elevation: 6,
+  },
+  modalIcon: {
+    marginBottom: 20,
   },
   modalText: {
     fontSize: 20,
@@ -197,6 +198,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '48%',
     elevation: 3,
+  },
+  confirmButton: {
+    backgroundColor: '#069906',
+  },
+  cancelButton: {
+    backgroundColor: '#D95D5D',
   },
   modalButtonText: {
     color: '#FFFFFF',

@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Animated, Dimensions } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { BarChart } from 'react-native-chart-kit';
+import { FontAwesome5 } from '@expo/vector-icons';
+import { LineChart } from 'react-native-chart-kit';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function SellerDashboard() {
-  const screenWidth = Dimensions.get('window').width;
-  const router = useRouter(); 
+  const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [ordersModalVisible, setOrdersModalVisible] = useState(false);
-  const [fadeAnim] = useState(new Animated.Value(0));
-  const [ordersFadeAnim] = useState(new Animated.Value(0));
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const ordersFadeAnim = useRef(new Animated.Value(0)).current;
 
   const salesData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -22,33 +24,16 @@ export default function SellerDashboard() {
     datasets: [{ data: [20, 35, 28, 40, 55, 60] }],
   };
 
-  const toggleModal = () => {
+  const toggleModal = (anim, setVisible) => {
     if (modalVisible) {
-      Animated.timing(fadeAnim, {
+      Animated.timing(anim, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
-      }).start(() => setModalVisible(false));
+      }).start(() => setVisible(false));
     } else {
-      setModalVisible(true);
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }
-  };
-
-  const toggleOrdersModal = () => {
-    if (ordersModalVisible) {
-      Animated.timing(ordersFadeAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => setOrdersModalVisible(false));
-    } else {
-      setOrdersModalVisible(true);
-      Animated.timing(ordersFadeAnim, {
+      setVisible(true);
+      Animated.timing(anim, {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
@@ -58,166 +43,138 @@ export default function SellerDashboard() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <LinearGradient colors={['#069906', '#045d04']} style={styles.header}>
         <Text style={styles.headerTitle}>Seller Dashboard</Text>
         <TouchableOpacity onPress={() => router.push('/auth/sellersettings')} style={styles.settingsButton}>
-          <FontAwesome name="cog" size={24} color="#fff" />
+          <FontAwesome5 name="cog" size={24} color="#fff" />
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Sales Summary Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sales Summary</Text>
-          <BarChart
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Sales Summary</Text>
+          <LineChart
             data={salesData}
             width={screenWidth * 0.85}
             height={220}
             yAxisLabel="₱"
             chartConfig={chartConfig}
-            verticalLabelRotation={30}
+            bezier
             style={styles.chart}
           />
           <View style={styles.summaryBox}>
-            <Text style={styles.summaryText}>Total Sales: ₱ 10,000</Text>
-            <Text style={styles.summaryText}>Orders: 120</Text>
-            <Text style={styles.summaryText}>Revenue: ₱ 8,000</Text>
-            <TouchableOpacity onPress={toggleModal} style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>Show Details</Text>
-            </TouchableOpacity>
+            <SummaryItem icon="chart-line" text="Total Sales: ₱ 10,000" />
+            <SummaryItem icon="shopping-cart" text="Orders: 120" />
+            <SummaryItem icon="money-bill-wave" text="Revenue: ₱ 8,000" />
           </View>
+          <TouchableOpacity onPress={() => toggleModal(fadeAnim, setModalVisible)} style={styles.modalButton}>
+            <Text style={styles.modalButtonText}>Show Details</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Modal for Sales Detailed Information */}
-        <Modal
-          animationType="none"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={toggleModal}
-        >
-          <View style={styles.modalOverlay}>
-            <Animated.View style={[styles.modalContent, { opacity: fadeAnim }]}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Sales Details</Text>
-                <TouchableOpacity onPress={toggleModal}>
-                  <FontAwesome name="times" size={24} color="#069906" />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.modalText}>Here are the details of your sales:</Text>
-              <View style={styles.detailsContainer}>
-                <Text style={styles.detailText}>- January: ₱ 5000 (20 Orders)</Text>
-                <Text style={styles.detailText}>- February: ₱ 8000 (35 Orders)</Text>
-                <Text style={styles.detailText}>- March: ₱ 6000 (28 Orders)</Text>
-                <Text style={styles.detailText}>- April: ₱ 7000 (40 Orders)</Text>
-                <Text style={styles.detailText}>- May: ₱ 9000 (55 Orders)</Text>
-                <Text style={styles.detailText}>- June: ₱ 10000 (60 Orders)</Text>
-              </View>
-              <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
-        </Modal>
-
-        {/* Orders Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Orders</Text>
-          <BarChart
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Orders</Text>
+          <LineChart
             data={ordersData}
             width={screenWidth * 0.85}
             height={220}
-            yAxisLabel=""
             chartConfig={chartConfig}
-            verticalLabelRotation={30}
+            bezier
             style={styles.chart}
           />
-          <View style={styles.orderBox}>
-            <Text style={styles.orderText}>Pending Orders: 5</Text>
-            <Text style={styles.orderText}>Shipped Orders: 100</Text>
-            <Text style={styles.orderText}>Delivered Orders: 15</Text>
-            <TouchableOpacity onPress={toggleOrdersModal} style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>Show Details</Text>
-            </TouchableOpacity>
+          <View style={styles.summaryBox}>
+            <SummaryItem icon="clock" text="Pending Orders: 5" />
+            <SummaryItem icon="shipping-fast" text="Shipped Orders: 100" />
+            <SummaryItem icon="check-circle" text="Delivered Orders: 15" />
           </View>
+          <TouchableOpacity onPress={() => toggleModal(ordersFadeAnim, setOrdersModalVisible)} style={styles.modalButton}>
+            <Text style={styles.modalButtonText}>Show Details</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Modal for Orders Detailed Information */}
-        <Modal
-          animationType="none"
-          transparent={true}
-          visible={ordersModalVisible}
-          onRequestClose={toggleOrdersModal}
-        >
-          <View style={styles.modalOverlay}>
-            <Animated.View style={[styles.modalContent, { opacity: ordersFadeAnim }]}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Orders Details</Text>
-                <TouchableOpacity onPress={toggleOrdersModal}>
-                  <FontAwesome name="times" size={24} color="#069906" />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.modalText}>Here are the details of your orders:</Text>
-              <View style={styles.detailsContainer}>
-                <Text style={styles.detailText}>- Pending Orders: 5</Text>
-                <Text style={styles.detailText}>- Shipped Orders: 100</Text>
-                <Text style={styles.detailText}>- Delivered Orders: 15</Text>
-              </View>
-              <TouchableOpacity style={styles.closeButton} onPress={toggleOrdersModal}>
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
-        </Modal>
-
-        {/* Quick Actions Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Quick Actions</Text>
           <View style={styles.actionsContainer}>
-            <TouchableOpacity
-              onPress={() => router.push('auth/viewproducts')}
-              style={styles.actionButton}
-              activeOpacity={0.8}
-            >
-              <FontAwesome name="eye" size={18} color="#fff" />
-              <Text style={styles.actionButtonText}> View Product</Text>
-            </TouchableOpacity>
-            {/* New My Orders Button */}
-            <TouchableOpacity
-              onPress={() => router.push('auth/myorder')}
-              style={styles.actionButton}
-              activeOpacity={0.8}
-            >
-              <FontAwesome name="list" size={18} color="#fff" />
-              <Text style={styles.actionButtonText}> My Orders</Text>
-            </TouchableOpacity>
+            <ActionButton icon="eye" text="View Products" onPress={() => router.push('auth/viewproducts')} />
+            <ActionButton icon="list" text="My Orders" onPress={() => router.push('auth/myorder')} />
           </View>
         </View>
       </ScrollView>
+
+      <DetailModal
+        visible={modalVisible}
+        onClose={() => toggleModal(fadeAnim, setModalVisible)}
+        fadeAnim={fadeAnim}
+        title="Sales Details"
+        details={[
+          'January: ₱ 5000 (20 Orders)',
+          'February: ₱ 8000 (35 Orders)',
+          'March: ₱ 6000 (28 Orders)',
+          'April: ₱ 7000 (40 Orders)',
+          'May: ₱ 9000 (55 Orders)',
+          'June: ₱ 10000 (60 Orders)',
+        ]}
+      />
+
+      <DetailModal
+        visible={ordersModalVisible}
+        onClose={() => toggleModal(ordersFadeAnim, setOrdersModalVisible)}
+        fadeAnim={ordersFadeAnim}
+        title="Orders Details"
+        details={[
+          'Pending Orders: 5',
+          'Shipped Orders: 100',
+          'Delivered Orders: 15',
+        ]}
+      />
     </SafeAreaView>
   );
 }
 
+const SummaryItem = ({ icon, text }) => (
+  <View style={styles.summaryItem}>
+    <FontAwesome5 name={icon} size={24} color="#069906" />
+    <Text style={styles.summaryText}>{text}</Text>
+  </View>
+);
+
+const ActionButton = ({ icon, text, onPress }) => (
+  <TouchableOpacity onPress={onPress} style={styles.actionButton}>
+    <FontAwesome5 name={icon} size={18} color="#fff" />
+    <Text style={styles.actionButtonText}>{text}</Text>
+  </TouchableOpacity>
+);
+
+const DetailModal = ({ visible, onClose, fadeAnim, title, details }) => (
+  <Modal animationType="none" transparent={true} visible={visible} onRequestClose={onClose}>
+    <View style={styles.modalOverlay}>
+      <Animated.View style={[styles.modalContent, { opacity: fadeAnim }]}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>{title}</Text>
+          <TouchableOpacity onPress={onClose}>
+            <FontAwesome5 name="times" size={24} color="#069906" />
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.modalText}>Here are the details:</Text>
+        <View style={styles.detailsContainer}>
+          {details.map((detail, index) => (
+            <Text key={index} style={styles.detailText}>- {detail}</Text>
+          ))}
+        </View>
+        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <Text style={styles.closeButtonText}>Close</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  </Modal>
+);
+
 const chartConfig = {
-  backgroundColor: '#ffffff',
   backgroundGradientFrom: '#ffffff',
   backgroundGradientTo: '#ffffff',
-  decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  barRadius: 8,
-  barPercentage: 0.6,
-  style: {
-    borderRadius: 16,
-    paddingVertical: 5,
-    marginVertical: 10,
-  },
-  propsForBackgroundLines: {
-    strokeWidth: 1,
-    stroke: '#e3e3e3',
-  },
-  fillShadowGradientFrom: '#069906',
-  fillShadowGradientFromOpacity: 0.5,
-  fillShadowGradientTo: '#069906',
-  fillShadowGradientToOpacity: 0.5,
+  color: (opacity = 1) => `rgba(6, 153, 6, ${opacity})`,
+  strokeWidth: 2,
+  barPercentage: 0.5,
+  useShadowColorFromDataset: false,
 };
 
 const styles = StyleSheet.create({
@@ -226,7 +183,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   header: {
-    backgroundColor: '#069906',
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -238,7 +194,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   settingsButton: {
-    backgroundColor: '#069906',
     padding: 10,
     borderRadius: 10,
   },
@@ -246,38 +201,69 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 16,
   },
-  section: {
+  card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     width: '90%',
-    elevation: 2,
-    top:20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  sectionTitle: {
+  cardTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#069906',
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
   },
   summaryBox: {
     marginTop: 10,
+  },
+  summaryItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    
+    marginBottom: 8,
   },
   summaryText: {
     fontSize: 16,
-    marginVertical: 5,
+    marginLeft: 10,
   },
   modalButton: {
     marginTop: 10,
     padding: 10,
     backgroundColor: '#069906',
     borderRadius: 10,
+    alignItems: 'center',
   },
   modalButtonText: {
     color: '#fff',
-    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    backgroundColor: '#069906',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  actionButtonText: {
+    color: '#fff',
+    marginLeft: 8,
     fontWeight: 'bold',
   },
   modalOverlay: {
@@ -289,13 +275,14 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#fff',
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 16,
     width: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 24,
@@ -304,51 +291,25 @@ const styles = StyleSheet.create({
   },
   modalText: {
     marginVertical: 10,
+    fontSize: 16,
   },
   detailsContainer: {
     marginVertical: 10,
   },
   detailText: {
     fontSize: 16,
+    marginBottom: 6,
   },
   closeButton: {
     marginTop: 20,
-    padding: 10,
+    padding: 12,
     backgroundColor: '#069906',
     borderRadius: 10,
+    alignItems: 'center',
   },
   closeButtonText: {
     color: '#fff',
-    textAlign: 'center',
     fontWeight: 'bold',
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 10,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    backgroundColor: '#069906',
-    padding: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  actionButtonText: {
-    color: '#fff',
-    marginLeft: 5,
-    fontWeight: 'bold',
-  },
-  orderBox: {
-    marginTop: 10,
-    alignItems: 'center',
-  },
-  orderText: {
     fontSize: 16,
-    marginVertical: 5,
   },
 });

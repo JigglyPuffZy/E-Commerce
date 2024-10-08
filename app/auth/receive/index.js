@@ -2,13 +2,14 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, SafeAreaView
 import React, { useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const initialPaymentData = [
-  { id: '1', name: 'Item 1', price: '₱239.00', image: 'https://i.pinimg.com/236x/bd/2f/91/bd2f91891f7f4cb44da0473401273fd7.jpg', description: 'Banga ng Aso', quantity: 4 },
-  { id: '2', name: 'Item 2', price: '₱200.00', discountedPrice: '₱180.00', image: 'https://i.pinimg.com/236x/bd/2f/91/bd2f91891f7f4cb44da0473401273fd7.jpg', description: 'Banga ng Pusa', quantity: 1 },
+  { id: '1', name: 'Premium Dog Food', price: '₱239.00', image: 'https://i.pinimg.com/236x/bd/2f/91/bd2f91891f7f4cb44da0473401273fd7.jpg', description: 'High-quality nutrition for your canine companion', quantity: 4 },
+  { id: '2', name: 'Luxury Cat Bed', price: '₱200.00', discountedPrice: '₱180.00', image: 'https://i.pinimg.com/236x/bd/2f/91/bd2f91891f7f4cb44da0473401273fd7.jpg', description: 'Comfortable and stylish resting place for your feline friend', quantity: 1 },
 ];
 
-export default function ToPayScreen() {
+export default function ToReceiveScreen() {
   const router = useRouter();
   const [paymentData, setPaymentData] = useState(initialPaymentData);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -30,27 +31,32 @@ export default function ToPayScreen() {
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardHeaderText}>To Receive</Text>
-      </View>
-      <View style={styles.itemContainer}>
-        <Image source={{ uri: item.image }} style={styles.itemImage} />
-        <View style={styles.itemDetails}>
-          <Text style={styles.itemName}>{item.name}</Text>
-          <Text style={styles.itemDescription}>{item.description}</Text>
-          <Text style={styles.itemQuantity}>Quantity: x{item.quantity}</Text>
-          <Text style={styles.itemPrice}>Price: {item.price}</Text>
+      <LinearGradient
+        colors={['#f0f0f0', '#ffffff']}
+        style={styles.cardGradient}
+      >
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardHeaderText}>To Receive</Text>
         </View>
-      </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.contactButton}>
-          <FontAwesome name="envelope" size={16} color="#fff" />
-          <Text style={styles.buttonText}> Contact Seller</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.receivedButton} onPress={() => handleOrderReceived(item.id)}>
-          <Text style={styles.receivedButtonText}>Order Received</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.itemContainer}>
+          <Image source={{ uri: item.image }} style={styles.itemImage} />
+          <View style={styles.itemDetails}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            <Text style={styles.itemDescription}>{item.description}</Text>
+            <Text style={styles.itemQuantity}>Quantity: x{item.quantity}</Text>
+            <Text style={styles.itemPrice}>Price: {item.price}</Text>
+          </View>
+        </View>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.contactButton}>
+            <FontAwesome name="envelope" size={16} color="#fff" />
+            <Text style={styles.buttonText}> Contact Seller</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.receivedButton} onPress={() => handleOrderReceived(item.id)}>
+            <Text style={styles.receivedButtonText}>Order Received</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     </View>
   );
 
@@ -59,12 +65,15 @@ export default function ToPayScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
+      <LinearGradient
+        colors={['#069906', '#05780b']}
+        style={styles.headerContainer}
+      >
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitleText}>To Receive</Text>
-      </View>
+      </LinearGradient>
       <FlatList
         data={paymentData}
         renderItem={renderItem}
@@ -88,11 +97,10 @@ export default function ToPayScreen() {
         </View>
       </View>
 
-      {/* Modal for Order Received Confirmation */}
       <Modal
         visible={isModalVisible}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
@@ -124,10 +132,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#069906',
     elevation: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
   },
   backButton: {
     padding: 10,
@@ -144,7 +149,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   card: {
-    backgroundColor: '#ffffff',
     borderRadius: 15,
     elevation: 4,
     shadowColor: '#000',
@@ -152,8 +156,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     marginBottom: 20,
+    overflow: 'hidden',
+  },
+  cardGradient: {
     padding: 15,
-    top:20,
   },
   cardHeader: {
     marginBottom: 10,
@@ -162,7 +168,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#069906',
-    
   },
   itemContainer: {
     flexDirection: 'row',
@@ -209,20 +214,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 15,
-    backgroundColor: '#069906', // Keep the background color as is
+    backgroundColor: '#069906',
     borderRadius: 8,
     justifyContent: 'center',
     elevation: 2,
   },
   buttonText: {
-    color: '#ffffff', // Set the button text color to white
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },
   receivedButton: {
     paddingVertical: 12,
     paddingHorizontal: 15,
-    backgroundColor: '#069906', // Green color
+    backgroundColor: '#069906',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -267,7 +272,7 @@ const styles = StyleSheet.create({
   totalText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FF5722', // Highlight total amount
+    color: '#FF5722',
   },
   modalOverlay: {
     flex: 1,
@@ -307,7 +312,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   cancelModalButton: {
-    backgroundColor: '#B0B0B0', // Grey color
+    backgroundColor: '#B0B0B0',
   },
   modalButtonText: {
     color: '#fff',

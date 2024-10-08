@@ -16,11 +16,15 @@ import {
   Animated,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 
 const EditProduct = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { product } = route.params || {};
+
   const [productName, setProductName] = React.useState('');
   const [price, setPrice] = React.useState('');
   const [size, setSize] = React.useState('');
@@ -28,7 +32,16 @@ const EditProduct = () => {
   const [recentImages, setRecentImages] = React.useState([]);
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const navigation = useNavigation();
+
+  React.useEffect(() => {
+    if (product) {
+      setProductName(product.name || '');
+      setPrice(product.price ? product.price.toString() : '');
+      setSize(product.size || '');
+      setDescription(product.description || '');
+      setRecentImages(product.images || []);
+    }
+  }, [product]);
 
   React.useEffect(() => {
     const requestPermissions = async () => {
@@ -170,7 +183,7 @@ const EditProduct = () => {
                 <TextInput
                   style={styles.priceInput}
                   value={price}
-                  onChangeText={text => setPrice(text.replace(/[^0-9]/g, ''))} // Allow only numeric input
+                  onChangeText={text => setPrice(text.replace(/[^0-9]/g, ''))}
                   keyboardType="numeric"
                   placeholder="0.00"
                   placeholderTextColor="#888"
@@ -247,7 +260,7 @@ const EditProduct = () => {
           <Animated.View style={[styles.modalBackdrop, { opacity: fadeAnim }]}>
             <View style={styles.modalContent}>
               <Text style={styles.modalHeader}>Success</Text>
-              <Text style={styles.modalText}>Product added successfully!</Text>
+              <Text style={styles.modalText}>Product updated successfully!</Text>
               <TouchableOpacity style={styles.modalButton} onPress={handleCloseModal}>
                 <Text style={styles.modalButtonText}>Okay</Text>
               </TouchableOpacity>
