@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Animated, StatusBar, RefreshControl } from 'react-native';
 import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SellerInfo() {
-  const initialSellerInfo = {
+  const [sellerInfo, setSellerInfo] = useState({
     shopName: "Viah's Shop",
     firstName: 'Viah',
     lastName: 'Saquing',
@@ -12,166 +13,200 @@ export default function SellerInfo() {
     email: 'viahsaquing@gmail.com',
     contactNo: '0917-123-4567',
     address: 'Santa Maria, Isabela',
-  };
+  });
 
-  const [shopName, setShopName] = useState(initialSellerInfo.shopName);
-  const [firstName, setFirstName] = useState(initialSellerInfo.firstName);
-  const [lastName, setLastName] = useState(initialSellerInfo.lastName);
-  const [midName, setMidName] = useState(initialSellerInfo.midName);
-  const [email, setEmail] = useState(initialSellerInfo.email);
-  const [contactNo, setContactNo] = useState(initialSellerInfo.contactNo);
-  const [address, setAddress] = useState(initialSellerInfo.address);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const router = useRouter();
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const handleBackButtonPress = () => {
     router.back();
   };
 
   const handleEditButtonPress = () => {
-    router.push('/auth/sellerinfoedit', {
-      params: { shopName, firstName, lastName, midName, contactNo, email, address },
-    });
+    router.push('/auth/sellerinfoedit', { params: sellerInfo });
+  };
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 2000);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackButtonPress}>
-            <FontAwesome name="arrow-left" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Seller Info</Text>
-        </View>
+      <StatusBar barStyle="light-content" backgroundColor="#069906" />
+      <LinearGradient
+        colors={['#069906', '#45c745']}
+        style={styles.header}
+      >
+        <TouchableOpacity style={styles.backButton} onPress={handleBackButtonPress}>
+          <FontAwesome name="arrow-left" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Seller Info</Text>
+      </LinearGradient>
 
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor="#069906"
+          />
+        }
+      >
         <View style={styles.content}>
-          <View style={styles.infoCard}>
-            <View style={styles.infoGroup}>
-              <FontAwesome5 name="store" size={24} color="#069906" />
-              <Text style={styles.label}>Shop Name: </Text>
-              <Text style={styles.infoText}>{shopName}</Text>
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="user" size={24} color="#069906" />
-              <Text style={styles.label}>First Name: </Text>
-              <Text style={styles.infoText}>{firstName}</Text>
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="user" size={24} color="#069906" />
-              <Text style={styles.label}>Last Name: </Text>
-              <Text style={styles.infoText}>{lastName}</Text>
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="user" size={24} color="#069906" />
-              <Text style={styles.label}>Middle Name: </Text>
-              <Text style={styles.infoText}>{midName}</Text>
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="phone" size={24} color="#069906" />
-              <Text style={styles.label}>Contact Number: </Text>
-              <Text style={styles.infoText}>{contactNo}</Text>
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="envelope" size={24} color="#069906" />
-              <Text style={styles.label}>Email: </Text>
-              <Text style={styles.infoText}>{email}</Text>
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="map-marker" size={24} color="#069906" />
-              <Text style={styles.label}>Address: </Text>
-              <Text style={styles.infoText}>{address}</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity style={styles.editButton} onPress={handleEditButtonPress}>
-            <Text style={styles.editButtonText}>Edit Info</Text>
-          </TouchableOpacity>
+          {Object.entries(sellerInfo).map(([key, value], index) => (
+            <InfoCard
+              key={key}
+              icon={getIconForKey(key)}
+              label={formatLabel(key)}
+              value={value}
+              index={index}
+            />
+          ))}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
+      
+      <TouchableOpacity style={styles.fab} onPress={handleEditButtonPress}>
+        <FontAwesome name="edit" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
+const InfoCard = ({ icon, label, value, index }) => {
+  const animatedValue = useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: 1,
+      duration: 300,
+      delay: index * 100,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.card,
+        {
+          opacity: animatedValue,
+          transform: [
+            {
+              translateY: animatedValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [50, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <FontAwesome5 name={icon} size={24} color="#069906" />
+      <View style={styles.cardContent}>
+        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.infoText}>{value}</Text>
+      </View>
+    </Animated.View>
+  );
+};
+
+const getIconForKey = (key) => {
+  const iconMap = {
+    shopName: "store",
+    firstName: "user",
+    lastName: "user",
+    midName: "user",
+    email: "envelope",
+    contactNo: "phone",
+    address: "map-marker",
+  };
+  return iconMap[key] || "info-circle";
+};
+
+const formatLabel = (key) => {
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f2f2',
+    backgroundColor: '#f8f9fa',
+  },
+  header: {
+    height: 100,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingBottom: 20,
+    paddingHorizontal: 16,
+  },
+  backButton: {
+    padding: 10,
+    marginRight: 10,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   scrollContainer: {
     padding: 16,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  backButton: {
-    padding: 10,
-    backgroundColor: '#069906',
-    borderRadius: 50,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#069906',
-    marginLeft: 12,
-  },
   content: {
     flex: 1,
+    marginTop: 20,
   },
-  infoCard: {
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 15,
     padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
-    marginBottom: 20,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  infoGroup: {
-    marginBottom: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
+  cardContent: {
+    marginLeft: 16,
+    flex: 1,
   },
   label: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  infoText: {
     fontSize: 18,
     color: '#333',
     fontWeight: 'bold',
-    marginLeft: 10,
   },
-  infoText: {
-    fontSize: 16,
-    color: '#666',
-    marginLeft: 5,
-  },
-  editButton: {
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
     backgroundColor: '#069906',
-    paddingVertical: 14,
-    borderRadius: 12,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#069906',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 7,
-  },
-  editButtonText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
 });

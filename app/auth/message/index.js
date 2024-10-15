@@ -1,33 +1,64 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Image, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform, Image, SafeAreaView, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ConversationScreen() {
   const navigation = useNavigation();
-
   const [messages, setMessages] = useState([
-    { id: '1', text: '1500 lang boss!', sender: 'user' },
-    { id: '2', text: 'Magkano yung banga boss?', sender: 'other' },
+    { id: '1', content: '1500 lang boss!', sender: 'user', type: 'text' },
+    { id: '2', content: 'Magkano yung banga boss?', sender: 'other', type: 'text' },
   ]);
   const [newMessage, setNewMessage] = useState('');
+  const [fadeAnim] = useState(new Animated.Value(0));
 
-  const sendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages([...messages, { id: Date.now().toString(), text: newMessage, sender: 'user' }]);
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const sendMessage = (content, type = 'text') => {
+    if (content) {
+      setMessages([{ id: Date.now().toString(), content, sender: 'user', type }, ...messages]);
       setNewMessage('');
     }
   };
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      sendMessage(result.assets[0].uri, 'image');
+    }
+  };
+
   const renderMessage = ({ item }) => (
-    <View style={[styles.messageContainer, item.sender === 'user' ? styles.userMessage : styles.otherMessage]}>
-      <Text style={styles.messageText}>{item.text}</Text>
-    </View>
+    <Animated.View 
+      style={[
+        styles.messageContainer, 
+        item.sender === 'user' ? styles.userMessage : styles.otherMessage,
+        { opacity: fadeAnim }
+      ]}
+    >
+      {item.type === 'text' ? (
+        <Text style={styles.messageText}>{item.content}</Text>
+      ) : (
+        <Image source={{ uri: item.content }} style={styles.messageImage} />
+      )}
+    </Animated.View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.arrowButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="white" />
@@ -44,7 +75,6 @@ export default function ConversationScreen() {
         </View>
       </View>
 
-      {/* Messages */}
       <FlatList
         data={messages}
         renderItem={renderMessage}
@@ -53,9 +83,11 @@ export default function ConversationScreen() {
         inverted
       />
 
-      {/* Input */}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.inputContainer}>
+          <TouchableOpacity style={styles.attachButton} onPress={pickImage}>
+            <Ionicons name="image" size={24} color="#069906" />
+          </TouchableOpacity>
           <TextInput
             style={styles.input}
             placeholder="Type a message..."
@@ -63,7 +95,7 @@ export default function ConversationScreen() {
             onChangeText={setNewMessage}
             placeholderTextColor="#888"
           />
-          <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+          <TouchableOpacity style={styles.sendButton} onPress={() => sendMessage(newMessage)}>
             <Ionicons name="send" size={24} color="white" />
           </TouchableOpacity>
         </View>
@@ -85,10 +117,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#069906',
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
   headerContent: {
     flexDirection: 'row',
@@ -102,10 +130,6 @@ const styles = StyleSheet.create({
     marginRight: 15,
     borderWidth: 2,
     borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
   headerTextContainer: {
     justifyContent: 'center',
@@ -131,10 +155,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginVertical: 5,
     maxWidth: '75%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
   },
   userMessage: {
     alignSelf: 'flex-end',
@@ -151,6 +171,11 @@ const styles = StyleSheet.create({
     color: 'white',
     lineHeight: 20,
   },
+  messageImage: {
+    width: 200,
+    height: 150,
+    borderRadius: 10,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -158,10 +183,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#ddd',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
   },
   input: {
     flex: 1,
@@ -169,7 +190,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#f0f0f0',
     marginRight: 10,
-    elevation: 3,
+  },
+  attachButton: {
+    padding: 10,
   },
   sendButton: {
     backgroundColor: '#069906',
@@ -177,6 +200,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
   },
 });

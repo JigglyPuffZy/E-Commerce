@@ -1,7 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+
+const { width, height } = Dimensions.get('window');
 
 export default function SignUp() {
   const router = useRouter();
@@ -12,7 +17,6 @@ export default function SignUp() {
   const inputRefs = useRef([]);
   const [loading, setLoading] = useState(false);
 
-  // States for form inputs
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -71,64 +75,98 @@ export default function SignUp() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <LinearGradient
+        colors={['#2ecc71', '#27ae60']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.gradient}
+      >
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          <Animated.View style={styles.logoContainer}>
+            <Ionicons name="leaf-outline" size={80} color="#ffffff" />
+            <Text style={styles.logoText}>Banga Shop</Text>
+          </Animated.View>
 
-      <TextInput
-        placeholder="Name"
-        style={styles.input}
-        placeholderTextColor="#888"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        placeholder="Email"
-        style={styles.input}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        placeholderTextColor="#888"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        placeholder="Password"
-        style={styles.input}
-        secureTextEntry
-        placeholderTextColor="#888"
-        value={password}
-        onChangeText={setPassword}
-      />
-      <TextInput
-        placeholder="Confirm Password"
-        style={styles.input}
-        secureTextEntry
-        placeholderTextColor="#888"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
+          <Text style={styles.title}>Create Account</Text>
 
-      <TouchableOpacity onPress={handleCreateAccount} style={styles.signUpButton}>
-        <Text style={styles.signUpButtonText}>Create Account</Text>
-      </TouchableOpacity>
+          <BlurView intensity={20} tint="light" style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Ionicons name="person-outline" size={24} color="#ffffff" style={styles.icon} />
+              <TextInput
+                placeholder="Name"
+                style={styles.input}
+                placeholderTextColor="#e0e0e0"
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
 
-      <TouchableOpacity onPress={() => router.push('auth/sign-in')} style={styles.signInLink}>
-        <Text style={styles.signInLinkText}>Already have an account? Sign In</Text>
-      </TouchableOpacity>
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={24} color="#ffffff" style={styles.icon} />
+              <TextInput
+                placeholder="Email"
+                style={styles.input}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor="#e0e0e0"
+                value={email}
+                onChangeText={setEmail}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={24} color="#ffffff" style={styles.icon} />
+              <TextInput
+                placeholder="Password"
+                style={styles.input}
+                secureTextEntry
+                placeholderTextColor="#e0e0e0"
+                value={password}
+                onChangeText={setPassword}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={24} color="#ffffff" style={styles.icon} />
+              <TextInput
+                placeholder="Confirm Password"
+                style={styles.input}
+                secureTextEntry
+                placeholderTextColor="#e0e0e0"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+            </View>
+
+            <TouchableOpacity onPress={handleCreateAccount} style={styles.signUpButton}>
+              <Text style={styles.signUpButtonText}>Create Account</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push('auth/sign-in')} style={styles.signInLink}>
+              <Text style={styles.signInLinkText}>Already have an account? Sign In</Text>
+            </TouchableOpacity>
+          </BlurView>
+        </ScrollView>
+      </LinearGradient>
 
       {/* Modal for verification code */}
       <Modal
         visible={modalVisible}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <Animated.View style={styles.modalContent}>
+        <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
             <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✖</Text>
+              <Ionicons name="close" size={24} color="#ffffff" />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Enter Verification Code</Text>
-            <ScrollView contentContainerStyle={styles.verificationCodeContainer}>
+            <View style={styles.verificationCodeContainer}>
               {verificationCode.map((digit, index) => (
                 <TextInput
                   key={index}
@@ -142,9 +180,9 @@ export default function SignUp() {
                   placeholderTextColor="#888"
                 />
               ))}
-            </ScrollView>
+            </View>
             {loading ? (
-              <ActivityIndicator size="large" color="#069906" style={styles.loadingIndicator} />
+              <ActivityIndicator size="large" color="#ffffff" style={styles.loadingIndicator} />
             ) : (
               <TouchableOpacity onPress={handleVerify} style={styles.verifyButton}>
                 <Text style={styles.verifyButtonText}>Verify</Text>
@@ -153,26 +191,27 @@ export default function SignUp() {
             <TouchableOpacity onPress={() => setResendModalVisible(true)} style={styles.resendButton}>
               <Text style={styles.resendButtonText}>Resend Code</Text>
             </TouchableOpacity>
-          </Animated.View>
-        </View>
+          </View>
+        </BlurView>
       </Modal>
 
-      {/* Error Modal for incorrect verification code */}
+      {/* Error Modal */}
       <Modal
         visible={errorModalVisible}
         animationType="fade"
         transparent={true}
         onRequestClose={() => setErrorModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
           <View style={styles.errorModalContent}>
-            <Text style={styles.modalTitle}>Invalid </Text>
+            <Ionicons name="alert-circle-outline" size={48} color="#FF6B6B" />
+            <Text style={styles.modalTitle}>Error</Text>
             <Text style={styles.modalMessage}>{errorMessage}</Text>
             <TouchableOpacity onPress={() => setErrorModalVisible(false)} style={styles.verifyButton}>
               <Text style={styles.verifyButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </BlurView>
       </Modal>
 
       {/* Resend Code Modal */}
@@ -182,65 +221,90 @@ export default function SignUp() {
         transparent={true}
         onRequestClose={() => setResendModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <BlurView intensity={40} tint="dark" style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Resend Verification Code</Text>
             <Text style={styles.modalMessage}>Are you sure you want to resend the verification code?</Text>
             <TouchableOpacity onPress={handleResendCode} style={styles.verifyButton}>
               <Text style={styles.verifyButtonText}>Yes, Resend</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setResendModalVisible(false)} style={styles.verifyButton}>
+            <TouchableOpacity onPress={() => setResendModalVisible(false)} style={[styles.verifyButton, styles.cancelButton]}>
               <Text style={styles.verifyButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </BlurView>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
+  scrollView: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#ffffff',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logoText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginTop: 10,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 40,
-    color: '#069906',
+    marginBottom: 30,
+    color: '#ffffff',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
-  input: {
-    height: 55,
-    borderColor: '#ccc',
-    borderWidth: 1,
+  formContainer: {
+    borderRadius: 20,
+    padding: 20,
+    overflow: 'hidden',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 12,
     paddingHorizontal: 15,
-    marginBottom: 15,
-    backgroundColor: '#f9f9f9',
-    color: '#333',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+  },
+  icon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    height: 55,
+    color: '#ffffff',
+    fontSize: 16,
   },
   signUpButton: {
-    backgroundColor: '#069906',
+    backgroundColor: '#ffffff',
     paddingVertical: 15,
     borderRadius: 12,
-    marginTop: 10,
-    shadowColor: '#069906',
+    marginTop: 20,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 6,
   },
   signUpButtonText: {
-    color: '#fff',
+    color: '#27ae60',
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
@@ -250,35 +314,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signInLinkText: {
-    color: '#069906',
+    color: '#ffffff',
     fontSize: 16,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    width: '90%',
-    maxHeight: '80%', // Limit the height to avoid overflow
-    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 20,
+    padding: 30,
+    width: width * 0.9,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   verificationCodeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginVertical: 10,
+    marginVertical: 20,
   },
   codeInput: {
-    width: 40,
-    height: 50,
+    width: 45,
+    height: 55,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#27ae60',
     borderRadius: 8,
     textAlign: 'center',
     fontSize: 24,
@@ -286,17 +352,11 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   verifyButton: {
-    backgroundColor: '#069906',
-    paddingVertical: 10,
-    paddingHorizontal:20,
-    borderRadius: 8,
-    marginTop: 10,
-    alignItems: 'center',
-    shadowColor: '#069906',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
+    backgroundColor: '#27ae60',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginTop: 20,
   },
   verifyButtonText: {
     color: '#ffffff',
@@ -305,44 +365,40 @@ const styles = StyleSheet.create({
   },
   resendButton: {
     marginTop: 15,
-    alignItems: 'center',
   },
   resendButtonText: {
-    color: '#069906',
+    color: '#27ae60',
     fontSize: 16,
   },
   closeButton: {
     position: 'absolute',
-    right: 10,
-    top: 10,
-  },
-  closeButtonText: {
-    fontSize: 24,
-    color: '#069906',
+    right: 15,
+    top: 15,
   },
   loadingIndicator: {
     marginVertical: 20,
   },
   errorModalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    width: '90%',
-    maxHeight: '80%', // Limit the height to avoid overflow
-    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 20,
+    padding: 30,
+    width: width * 0.9,
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#069906',
+    color: '#27ae60',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   modalMessage: {
     fontSize: 16,
     textAlign: 'center',
     color: '#333',
     marginBottom: 20,
+  },
+  cancelButton: {
+    backgroundColor: '#e74c3c',
   },
 });

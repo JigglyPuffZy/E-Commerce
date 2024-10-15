@@ -1,8 +1,9 @@
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, Modal, Alert, FlatList, Animated } from 'react-native';
 import React, { useState, useRef } from 'react';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, Modal, Alert, FlatList, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { FontAwesome5, MaterialIcons } from '@expo/vector-icons'; 
+import { FontAwesome5, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function EditProfile() {
   const [profilePicture, setProfilePicture] = useState('https://images4.alphacoders.com/125/thumb-1920-1258018.png');
@@ -16,7 +17,7 @@ export default function EditProfile() {
   const [modalVisible, setModalVisible] = useState(false);
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
   const [genderModalVisible, setGenderModalVisible] = useState(false);
-  const [genderOptions] = useState(['Male', 'Female']);
+  const [genderOptions] = useState(['Male', 'Female', 'Other']);
   const genderModalAnimation = useRef(new Animated.Value(0)).current;
 
   const navigation = useNavigation();
@@ -79,33 +80,25 @@ export default function EditProfile() {
 
   const handleModalOkay = () => {
     setSubmitModalVisible(false);
-    navigation.goBack(); // Navigate back to the previous screen
+    navigation.goBack();
   };
 
   const handleGenderSelect = (selectedGender) => {
     setGender(selectedGender);
-    setGenderModalVisible(false);
+    handleGenderModalClose();
   };
-
-  const renderGenderOption = ({ item }) => (
-    <TouchableOpacity onPress={() => handleGenderSelect(item)} style={styles.genderOption}>
-      <Text style={styles.genderOptionText}>{item}</Text>
-    </TouchableOpacity>
-  );
 
   const handleGenderModalOpen = () => {
     setGenderModalVisible(true);
-    Animated.timing(genderModalAnimation, {
+    Animated.spring(genderModalAnimation, {
       toValue: 1,
-      duration: 300,
       useNativeDriver: true,
     }).start();
   };
 
   const handleGenderModalClose = () => {
-    Animated.timing(genderModalAnimation, {
+    Animated.spring(genderModalAnimation, {
       toValue: 0,
-      duration: 300,
       useNativeDriver: true,
     }).start(() => setGenderModalVisible(false));
   };
@@ -124,145 +117,98 @@ export default function EditProfile() {
     return `${numbers.slice(0, 4)}-${numbers.slice(4, 7)}-${numbers.slice(7)}`;
   };
 
+  const renderInput = ({ label, value, onChangeText, placeholder, icon, multiline = false, editable = true, onPress = () => {}, keyboardType = 'default' }) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.inputWrapper}>
+        <FontAwesome5 name={icon} size={20} color="#069906" style={styles.inputIcon} />
+        {editable ? (
+          <TextInput
+            style={[styles.input, multiline && styles.multilineInput]}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder}
+            multiline={multiline}
+            keyboardType={keyboardType}
+            editable={editable}
+          />
+        ) : (
+          <TouchableOpacity onPress={onPress} style={styles.input}>
+            <Text style={styles.inputText}>{value || placeholder}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={['#069906', '#34D399']} style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Edit Profile</Text>
+      </LinearGradient>
+
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.arrowButton}>
-            <MaterialIcons name="arrow-back" size={24} color="#069906" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Edit Profile</Text>
-        </View>
-        
         <View style={styles.profilePictureContainer}>
-          {profilePicture ? (
-            <Image source={{ uri: profilePicture }} style={styles.profilePicture} />
-          ) : (
-            <View style={styles.profilePicturePlaceholder}>
-              <Text style={styles.profilePictureText}>No Profile Picture</Text>
-            </View>
-          )}
+          <Image source={{ uri: profilePicture }} style={styles.profilePicture} />
           <TouchableOpacity style={styles.editIconContainer} onPress={handleEditProfilePicture}>
-            <FontAwesome5 name="edit" size={14} color="#fff" />
+            <FontAwesome5 name="camera" size={16} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Input fields */}
-        {[ 
-          { label: 'Name', value: name, onChangeText: setName, placeholder: 'Enter your name' },
-          { label: 'Bio', value: bio, onChangeText: setBio, placeholder: 'Enter your bio', multiline: true },
-          { 
-            label: 'Gender', 
-            value: gender, 
-            onPress: handleGenderModalOpen,
-            placeholder: 'Select your gender',
-            editable: false
-          },
-          { 
-            label: 'Birthday', 
-            value: birthday, 
-            onChangeText: (text) => setBirthday(formatDate(text)), 
-            placeholder: 'MM/DD/YYYY',
-            keyboardType: 'numeric'
-          },
-          { 
-            label: 'Phone', 
-            value: phone, 
-            onChangeText: (text) => setPhone(formatPhone(text)), 
-            placeholder: 'Enter your phone',
-            keyboardType: 'numeric'
-          },
-          { label: 'Email', value: email, onChangeText: setEmail, placeholder: 'Enter your email' },
-          { label: 'Address', value: address, onChangeText: setAddress, placeholder: 'Enter your address' },
-        ].map(({ label, value, onChangeText, placeholder, multiline = false, editable = true, onPress = () => {}, keyboardType = 'default' }, index) => (
-          <View key={index} style={styles.inputContainer}>
-            <Text style={styles.label}>{label}</Text>
-            {editable ? (
-              <TextInput
-                style={styles.input}
-                value={value}
-                onChangeText={onChangeText}
-                placeholder={placeholder}
-                multiline={multiline}
-                keyboardType={keyboardType}
-                editable={editable}
-              />
-            ) : (
-              <TouchableOpacity onPress={onPress} style={styles.input}>
-                <Text style={styles.inputText}>{value}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        ))}
+        {renderInput({ label: 'Name', value: name, onChangeText: setName, placeholder: 'Enter your name', icon: 'user' })}
+        {renderInput({ label: 'Bio', value: bio, onChangeText: setBio, placeholder: 'Enter your bio', icon: 'info-circle', multiline: true })}
+        {renderInput({ label: 'Gender', value: gender, onPress: handleGenderModalOpen, placeholder: 'Select your gender', icon: 'venus-mars', editable: false })}
+        {renderInput({ label: 'Birthday', value: birthday, onChangeText: (text) => setBirthday(formatDate(text)), placeholder: 'MM/DD/YYYY', icon: 'birthday-cake', keyboardType: 'numeric' })}
+        {renderInput({ label: 'Phone', value: phone, onChangeText: (text) => setPhone(formatPhone(text)), placeholder: 'Enter your phone', icon: 'phone', keyboardType: 'numeric' })}
+        {renderInput({ label: 'Email', value: email, onChangeText: setEmail, placeholder: 'Enter your email', icon: 'envelope' })}
+        {renderInput({ label: 'Address', value: address, onChangeText: setAddress, placeholder: 'Enter your address', icon: 'map-marker-alt' })}
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save</Text>
+          <Text style={styles.saveButtonText}>Save Changes</Text>
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Modal for editing profile picture */}
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        animationType="slide"
-        onRequestClose={handleCancel}
-      >
+      <Modal transparent visible={modalVisible} animationType="fade" onRequestClose={handleCancel}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <TouchableOpacity onPress={pickImageFromGallery} style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>Photos</Text>
+              <FontAwesome5 name="images" size={20} color="#fff" style={styles.modalButtonIcon} />
+              <Text style={styles.modalButtonText}>Choose from Gallery</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleCameraAction} style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>Camera</Text>
+              <FontAwesome5 name="camera" size={20} color="#fff" style={styles.modalButtonIcon} />
+              <Text style={styles.modalButtonText}>Take a Photo</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleCancel} style={styles.modalButton}>
+            <TouchableOpacity onPress={handleCancel} style={[styles.modalButton, styles.cancelButton]}>
               <Text style={styles.modalButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Gender Selection Modal */}
-      <Modal
-        transparent={true}
-        visible={genderModalVisible}
-        animationType="none"
-        onRequestClose={handleGenderModalClose}
-      >
-        <Animated.View
-          style={[
-            styles.modalContainer,
-            {
-              opacity: genderModalAnimation,
-              transform: [{ translateY: genderModalAnimation.interpolate({
-                inputRange: [0, 1],
-                outputRange: [500, 0],
-              }) }]
-            }
-          ]}
-        >
-          <View style={styles.genderModalContent}>
-            <FlatList
-              data={genderOptions}
-              renderItem={renderGenderOption}
-              keyExtractor={(item) => item}
-            />
-            <TouchableOpacity onPress={handleGenderModalClose} style={styles.modalButton}>
+      <Modal transparent visible={genderModalVisible} animationType="none" onRequestClose={handleGenderModalClose}>
+        <Animated.View style={[styles.modalContainer, { opacity: genderModalAnimation }]}>
+          <Animated.View style={[styles.genderModalContent, { transform: [{ scale: genderModalAnimation }] }]}>
+            <Text style={styles.genderModalTitle}>Select Gender</Text>
+            {genderOptions.map((option) => (
+              <TouchableOpacity key={option} onPress={() => handleGenderSelect(option)} style={styles.genderOption}>
+                <Text style={styles.genderOptionText}>{option}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity onPress={handleGenderModalClose} style={[styles.modalButton, styles.cancelButton]}>
               <Text style={styles.modalButtonText}>Cancel</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         </Animated.View>
       </Modal>
 
-      {/* Submit Confirmation Modal */}
-      <Modal
-        transparent={true}
-        visible={submitModalVisible}
-        animationType="slide"
-        onRequestClose={() => setSubmitModalVisible(false)}
-      >
+      <Modal transparent visible={submitModalVisible} animationType="fade" onRequestClose={() => setSubmitModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+            <FontAwesome5 name="check-circle" size={50} color="#069906" style={styles.successIcon} />
             <Text style={styles.modalMessage}>Profile updated successfully!</Text>
             <TouchableOpacity onPress={handleModalOkay} style={styles.modalButton}>
               <Text style={styles.modalButtonText}>Okay</Text>
@@ -277,89 +223,90 @@ export default function EditProfile() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
-  container: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  headerContainer: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 30,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
   },
-  arrowButton: {
-    marginRight: 10,
-    right:90,
+  backButton: {
+    marginRight: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#069906',
-    right:90,
+    color: '#fff',
+  },
+  container: {
+    padding: 20,
   },
   profilePictureContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   profilePicture: {
     width: 120,
     height: 120,
     borderRadius: 60,
-  },
-  profilePicturePlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#ccc',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profilePictureText: {
-    fontSize: 16,
-    color: '#fff',
+    borderWidth: 3,
+    borderColor: '#069906',
   },
   editIconContainer: {
     position: 'absolute',
     bottom: 0,
     right: 0,
     backgroundColor: '#069906',
-    padding: 6,
-    borderRadius: 15,
+    padding: 8,
+    borderRadius: 20,
   },
   inputContainer: {
-    width: '100%',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
     fontSize: 16,
-    color: '#069906',
-    marginBottom: 5,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 12,
     fontSize: 16,
     color: '#333',
   },
+  multilineInput: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
   inputText: {
-    color: '#333',
     fontSize: 16,
+    color: '#333',
   },
   saveButton: {
     backgroundColor: '#069906',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
+    paddingVertical: 16,
     borderRadius: 8,
-    marginTop: 20,
+    alignItems: 'center',
+    marginTop: 24,
   },
   saveButtonText: {
     color: '#fff',
     fontSize: 18,
-    textAlign: 'center',
+    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
@@ -369,43 +316,61 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 8,
+    padding: 24,
+    borderRadius: 16,
     alignItems: 'center',
+    width: '80%',
   },
   modalButton: {
-    marginVertical: 10,
-    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#069906',
-    borderRadius: 5,
-    width: 150,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginVertical: 8,
+    width: '100%',
+  },
+  modalButtonIcon: {
+    marginRight: 12,
   },
   modalButtonText: {
-    fontSize: 18,
     color: '#fff',
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  modalMessage: {
-    fontSize: 20,
-    marginBottom: 20,
-    color: '#069906',
-  },
-  genderOption: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    width: '100%',
-    alignItems: 'center',
-  },
-  genderOptionText: {
-    fontSize: 18,
-    color: '#069906',
+  cancelButton: {
+    backgroundColor: '#f44336',
   },
   genderModalContent: {
     backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 20,
-    alignItems: 'center',
-    width: '90%',
+    padding: 24,
+    borderRadius: 16,
+    width: '80%',
+  },
+  genderModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  genderOption: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  genderOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  successIcon: {
+    marginBottom: 16,
+  },
+  modalMessage: {
+    fontSize: 18,
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 24,
   },
 });

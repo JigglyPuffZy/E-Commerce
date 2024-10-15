@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Image, Modal, S
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 
 const { width } = Dimensions.get('window');
 
@@ -22,40 +21,36 @@ export default function PaymentPage() {
   const total = subtotal + shippingFee;
 
   const renderHeader = () => (
-    <View style={styles.headerContainer}>
+    <LinearGradient colors={['#069906', '#056705']} style={styles.headerContainer}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-        <FontAwesome5 name="chevron-left" size={24} color="#4a90e2" />
+        <FontAwesome5 name="arrow-left" size={20} color="#fff" />
       </TouchableOpacity>
       <Text style={styles.header}>Checkout</Text>
-    </View>
+    </LinearGradient>
   );
 
   const renderAddress = () => (
-    <View style={styles.section}>
-      <Text style={styles.subHeader}>Delivery Address</Text>
-      <View style={styles.addressContainer}>
-        <FontAwesome5 name="map-marker-alt" size={20} color="#4a90e2" style={styles.icon} />
-        <View style={styles.addressDetails}>
-          <Text style={styles.boldText}>Sally Gatan</Text>
-          <Text style={styles.addressText}>Purok 6, Mozzozzin sur, Santa Maria Isabela</Text>
-          <Text style={styles.addressText}>Mobile: +96-012 3445 44</Text>
-        </View>
-        <TouchableOpacity onPress={() => router.push('auth/addressselection')} style={styles.editButton}>
-          <FontAwesome5 name="edit" size={16} color="#4a90e2" />
-        </TouchableOpacity>
+    <TouchableOpacity onPress={() => router.push('auth/addressselection')} style={styles.addressContainer}>
+      <LinearGradient colors={['#069906', '#056705']} style={styles.addressIconContainer}>
+        <FontAwesome5 name="map-marker-alt" size={20} color="#fff" />
+      </LinearGradient>
+      <View style={styles.addressDetails}>
+        <Text style={styles.addressName}>Sally Gatan</Text>
+        <Text style={styles.addressText}>Purok 6, Mozzozzin sur, Santa Maria Isabela</Text>
+        <Text style={styles.addressText}>+96-012 3445 44</Text>
       </View>
-    </View>
+      <FontAwesome5 name="chevron-right" size={20} color="#069906" />
+    </TouchableOpacity>
   );
 
   const renderItems = () => (
-    <View style={styles.section}>
-      <Text style={styles.subHeader}>Order Summary</Text>
+    <View style={styles.itemsContainer}>
       {items.map(item => (
         <View key={item.id} style={styles.itemContainer}>
           <Image source={{ uri: item.image }} style={styles.itemImage} />
           <View style={styles.itemDetails}>
             <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.mutedText}>Variation: {item.name.includes('Dog') ? 'For Dogs' : 'For Cats'}</Text>
+            <Text style={styles.itemVariation}>Variation: {item.name.includes('Dog') ? 'For Dogs' : 'For Cats'}</Text>
             <View style={styles.priceContainer}>
               <Text style={styles.currentPrice}>₱{item.price.toFixed(2)}</Text>
               <Text style={styles.originalPrice}>₱{item.originalPrice.toFixed(2)}</Text>
@@ -63,35 +58,36 @@ export default function PaymentPage() {
           </View>
         </View>
       ))}
-      <Text style={styles.totalOrderText}>Total Items: {items.length}</Text>
     </View>
   );
 
   const renderPaymentMethods = () => (
-    <View style={styles.section}>
-      <Text style={styles.subHeader}>Payment Method</Text>
-      <View style={styles.paymentMethodsContainer}>
-        {['COD', 'GCash'].map((method) => (
-          <TouchableOpacity
-            key={method}
-            style={[
-              styles.paymentMethodButton,
-              selectedPaymentMethod === method && styles.paymentMethodButtonSelected
-            ]}
-            onPress={() => setSelectedPaymentMethod(method)}
+    <View style={styles.paymentMethodsContainer}>
+      {['COD', 'GCash'].map((method) => (
+        <TouchableOpacity
+          key={method}
+          style={[
+            styles.paymentMethodButton,
+            selectedPaymentMethod === method && styles.paymentMethodButtonSelected
+          ]}
+          onPress={() => setSelectedPaymentMethod(method)}
+        >
+          <LinearGradient
+            colors={selectedPaymentMethod === method ? ['#069906', '#056705'] : ['#fff', '#fff']}
+            style={styles.paymentMethodGradient}
           >
             <FontAwesome5 
               name={method === 'COD' ? 'money-bill-wave' : 'mobile-alt'} 
-              size={20} 
-              color={selectedPaymentMethod === method ? '#fff' : '#4a90e2'} 
+              size={24} 
+              color={selectedPaymentMethod === method ? '#fff' : '#069906'} 
             />
             <Text style={[
               styles.paymentMethodText,
               selectedPaymentMethod === method && styles.paymentMethodTextSelected
             ]}>{method === 'COD' ? 'Cash on Delivery' : 'GCash'}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 
@@ -103,8 +99,8 @@ export default function PaymentPage() {
         { label: 'Total', value: total, isBold: true }
       ].map((item, index) => (
         <View key={index} style={styles.summaryItem}>
-          <Text style={item.isBold ? styles.boldText : styles.mutedText}>{item.label}</Text>
-          <Text style={item.isBold ? [styles.boldText, styles.totalAmount] : styles.mutedText}>₱{item.value.toFixed(2)}</Text>
+          <Text style={item.isBold ? styles.summaryLabelBold : styles.summaryLabel}>{item.label}</Text>
+          <Text style={item.isBold ? styles.summaryValueBold : styles.summaryValue}>₱{item.value.toFixed(2)}</Text>
         </View>
       ))}
     </View>
@@ -112,28 +108,30 @@ export default function PaymentPage() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient colors={['#f0f8ff', '#e6f3ff']} style={styles.gradient}>
-        <ScrollView contentContainerStyle={styles.container}>
-          {renderHeader()}
-          {renderAddress()}
-          {renderItems()}
-          {renderPaymentMethods()}
-          {renderSummary()}
-          <TouchableOpacity 
-            style={styles.checkoutButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.checkoutButtonText}>Place Order</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </LinearGradient>
+      {renderHeader()}
+      <ScrollView contentContainerStyle={styles.container}>
+        {renderAddress()}
+        {renderItems()}
+        {renderPaymentMethods()}
+        {renderSummary()}
+      </ScrollView>
+      <TouchableOpacity 
+        style={styles.checkoutButton}
+        onPress={() => setModalVisible(true)}
+      >
+        <LinearGradient colors={['#069906', '#056705']} style={styles.checkoutButtonGradient}>
+          <Text style={styles.checkoutButtonText}>Place Order - ₱{total.toFixed(2)}</Text>
+        </LinearGradient>
+      </TouchableOpacity>
 
       <Modal transparent={true} visible={modalVisible} animationType="fade">
-        <BlurView intensity={100} style={styles.modalOverlay}>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <FontAwesome5 name="shopping-cart" size={50} color="#4a90e2" style={styles.modalIcon} />
+            <LinearGradient colors={['#069906', '#056705']} style={styles.modalIconContainer}>
+              <FontAwesome5 name="shopping-cart" size={40} color="#fff" />
+            </LinearGradient>
             <Text style={styles.modalTitle}>Confirm Order</Text>
-            <Text style={styles.modalMessage}>Are you ready to complete your purchase?</Text>
+            <Text style={styles.modalMessage}>Ready to complete your purchase?</Text>
             <View style={styles.modalButtonContainer}>
               {['Confirm', 'Cancel'].map((option) => (
                 <TouchableOpacity 
@@ -144,12 +142,17 @@ export default function PaymentPage() {
                     if (option === 'Confirm') router.push('auth/pay');
                   }}
                 >
-                  <Text style={[styles.modalButtonText, option === 'Cancel' && styles.modalButtonTextSecondary]}>{option}</Text>
+                  <LinearGradient
+                    colors={option === 'Confirm' ? ['#069906', '#056705'] : ['#fff', '#fff']}
+                    style={styles.modalButtonGradient}
+                  >
+                    <Text style={[styles.modalButtonText, option === 'Cancel' && styles.modalButtonTextSecondary]}>{option}</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
-        </BlurView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -158,99 +161,96 @@ export default function PaymentPage() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: '#f0fff0',
   },
   container: {
-    padding: 20,
+    padding: 16,
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
   },
   backButton: {
-    padding: 10,
+    marginRight: 16,
   },
   header: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginLeft: 15,
-  },
-  section: {
-    marginBottom: 25,
-  },
-  subHeader: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 15,
-    color: '#333',
+    fontWeight: '700',
+    color: '#fff',
   },
   addressContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#069906',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  icon: {
-    marginRight: 15,
-    alignSelf: 'center',
+  addressIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   addressDetails: {
     flex: 1,
   },
-  boldText: {
-    fontWeight: 'bold',
-    color: '#333',
-    fontSize: 16,
-    marginBottom: 5,
+  addressName: {
+    fontWeight: '600',
+    fontSize: 18,
+    marginBottom: 4,
+    color: '#045904',
   },
   addressText: {
-    color: '#666',
-    marginBottom: 2,
+    color: '#4b5563',
+    fontSize: 14,
   },
-  editButton: {
-    padding: 5,
+  itemsContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#069906',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   itemContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    paddingBottom: 16,
   },
   itemImage: {
     width: 80,
     height: 80,
     borderRadius: 8,
-    marginRight: 15,
+    marginRight: 16,
   },
   itemDetails: {
     flex: 1,
-    justifyContent: 'space-between',
   },
   itemName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
+    marginBottom: 4,
+    color: '#045904',
   },
-  mutedText: {
-    color: '#888',
+  itemVariation: {
     fontSize: 14,
+    color: '#4b5563',
+    marginBottom: 4,
   },
   priceContainer: {
     flexDirection: 'row',
@@ -258,46 +258,42 @@ const styles = StyleSheet.create({
   },
   currentPrice: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4a90e2',
-    marginRight: 10,
+    fontWeight: '700',
+    color: '#069906',
+    marginRight: 8,
   },
   originalPrice: {
     fontSize: 14,
-    color: '#888',
+    color: '#9ca3af',
     textDecorationLine: 'line-through',
-  },
-  totalOrderText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4a90e2',
-    marginTop: 10,
   },
   paymentMethodsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 20,
   },
   paymentMethodButton: {
+    flex: 1,
+    marginHorizontal: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#069906',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  paymentMethodGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
-    flex: 1,
-    marginHorizontal: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  paymentMethodButtonSelected: {
-    backgroundColor: '#4a90e2',
+    justifyContent: 'center',
+    padding: 16,
   },
   paymentMethodText: {
-    marginLeft: 10,
+    marginLeft: 12,
     fontSize: 16,
-    color: '#333',
+    fontWeight: '600',
+    color: '#069906',
   },
   paymentMethodTextSelected: {
     color: '#fff',
@@ -305,70 +301,96 @@ const styles = StyleSheet.create({
   summarySection: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    padding: 16,
+    marginBottom: 80,
+    shadowColor: '#069906',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   summaryItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  totalAmount: {
-    color: '#4a90e2',
+  summaryLabel: {
+    fontSize: 16,
+    color: '#4b5563',
+  },
+  summaryValue: {
+    fontSize: 16,
+    color: '#4b5563',
+  },
+  summaryLabelBold: {
     fontSize: 18,
+    fontWeight: '700',
+    color: '#045904',
+  },
+  summaryValueBold: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#069906',
   },
   checkoutButton: {
-    backgroundColor: '#4a90e2',
-    paddingVertical: 15,
-    borderRadius: 25,
-    alignItems: 'center',
-    shadowColor: '#4a90e2',
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#069906',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  checkoutButtonGradient: {
+    padding: 16,
+    alignItems: 'center',
   },
   checkoutButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
-    width: width * 0.8,
+    width: width * 0.85,
     backgroundColor: '#fff',
     borderRadius: 20,
-    padding: 25,
+    padding: 24,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 10,
   },
-  modalIcon: {
+  modalIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 12,
+    color: '#045904',
   },
   modalMessage: {
-    fontSize: 16,
+    fontSize: 18,
     textAlign: 'center',
-    marginBottom: 20,
-    color: '#666',
+    marginBottom: 24,
+    color: '#4b5563',
   },
   modalButtonContainer: {
     flexDirection: 'row',
@@ -376,23 +398,27 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modalButton: {
-    backgroundColor: '#4a90e2',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginHorizontal: 10,
+    flex: 1,
+    marginHorizontal: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  modalButtonSecondary: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#4a90e2',
+  modalButtonGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
   },
   modalButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalButtonSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#069906',
   },
   modalButtonTextSecondary: {
-    color: '#4a90e2',
+    color: '#069906',
   },
 });

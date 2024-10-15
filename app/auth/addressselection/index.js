@@ -2,81 +2,69 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { RadioButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import FontAwesome from 'react-native-vector-icons/FontAwesome'; 
+import { FontAwesome5 } from '@expo/vector-icons';
 
 export default function AddressSelection() {
   const [selectedValue, setSelectedValue] = useState('jigglypuff');
-  const router = useRouter(); 
+  const router = useRouter();
 
   const handleAddAddress = () => {
     router.push('/auth/editaddress');
   };
 
   const handleGoBack = () => {
-    router.back(); 
+    router.back();
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
+          <FontAwesome5 name="chevron-left" size={24} color="#069906" />
+        </TouchableOpacity>
+        <Text style={styles.header}>Select Delivery Address</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={handleGoBack} style={styles.backButton}>
-            <FontAwesome name="arrow-left" size={24} color="#069906" />
-          </TouchableOpacity>
-          <Text style={styles.header}>Address Selection</Text>
-        </View>
-
-        <View style={styles.addressContainer}>
-          <RadioButton
-            value="jigglypuff"
-            status={selectedValue === 'jigglypuff' ? 'checked' : 'unchecked'}
-            color="#069906"
-            onPress={() => setSelectedValue('jigglypuff')}
-          />
-          <View style={styles.addressInfo}>
-            <Text style={styles.addressName}>Viah Daquioag</Text>
-            <Text style={styles.addressPhone}>(+63) 906 692 7818</Text>
-            <Text style={styles.addressDetail}>
-              Purok 6, Mozzozzin North, Santa Maria, Isabela, North Luzon, 3330
-            </Text>
-            <Text style={styles.defaultTag}>Default</Text>
-          </View>
-          <TouchableOpacity 
-            onPress={() => router.push('/auth/editaddress')}
-            style={styles.editButton}>
-            <Text style={styles.editButtonText}>Edit</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.divider} />
-
-        <View style={styles.addressContainer}>
-          <RadioButton
-            value="jiggly"
-            status={selectedValue === 'jiggly' ? 'checked' : 'unchecked'}
-            color="#069906"
-            onPress={() => setSelectedValue('jiggly')}
-          />
-          <View style={styles.addressInfo}>
-            <Text style={styles.addressName}>Rosalie Gatan</Text>
-            <Text style={styles.addressPhone}>(+63) 910 463 3369</Text>
-            <Text style={styles.addressDetail}>
-              Purok 6, Buenavista, Santa Maria, Isabela, North Luzon, 3330
-            </Text>
-          </View>
-          <TouchableOpacity 
-            onPress={() => router.push('/auth/editaddress')}
-            style={styles.editButton}
+        {['jigglypuff', 'jiggly'].map((value, index) => (
+          <TouchableOpacity
+            key={value}
+            style={[
+              styles.addressContainer,
+              selectedValue === value && styles.selectedAddressContainer,
+            ]}
+            onPress={() => setSelectedValue(value)}
           >
-            <Text style={styles.editButtonText}>Edit</Text>
+            <RadioButton
+              value={value}
+              status={selectedValue === value ? 'checked' : 'unchecked'}
+              color="#069906"
+              onPress={() => setSelectedValue(value)}
+            />
+            <View style={styles.addressInfo}>
+              <Text style={styles.addressName}>
+                {index === 0 ? 'Viah Daquioag' : 'Rosalie Gatan'}
+              </Text>
+              <Text style={styles.addressPhone}>
+                {index === 0 ? '(+63) 906 692 7818' : '(+63) 910 463 3369'}
+              </Text>
+              <Text style={styles.addressDetail}>
+                {index === 0
+                  ? 'Purok 6, Mozzozzin North, Santa Maria, Isabela, North Luzon, 3330'
+                  : 'Purok 6, Buenavista, Santa Maria, Isabela, North Luzon, 3330'}
+              </Text>
+              {index === 0 && <Text style={styles.defaultTag}>Default</Text>}
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push('/auth/editaddress')}
+              style={styles.editButton}
+            >
+              <FontAwesome5 name="edit" size={18} color="#069906" />
+            </TouchableOpacity>
           </TouchableOpacity>
-        </View>
-        <View style={styles.divider} />
-
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={handleAddAddress}
-        >
-          <Text style={styles.addButtonText}>+ Add New Address</Text>
+        ))}
+        <TouchableOpacity style={styles.addButton} onPress={handleAddAddress}>
+          <FontAwesome5 name="plus" size={18} color="#FFFFFF" style={styles.addIcon} />
+          <Text style={styles.addButtonText}>Add New Address</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -91,12 +79,14 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#F8F8F8',
-    flexGrow: 1,
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
   },
   backButton: {
     marginRight: 16,
@@ -104,68 +94,71 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 20,
     fontWeight: '600',
-    flex: 1,
-   right:-5,
+    color: '#333333',
   },
   addressContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    marginBottom: 16,
+    padding: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    elevation: 1,
+    borderRadius: 12,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 4,
+  },
+  selectedAddressContainer: {
+    borderColor: '#069906',
+    borderWidth: 2,
   },
   addressInfo: {
     flex: 1,
     marginLeft: 12,
   },
   addressName: {
-    fontWeight: '500',
-    fontSize: 16,
+    fontWeight: '600',
+    fontSize: 18,
+    color: '#333333',
+    marginBottom: 4,
   },
   addressPhone: {
     color: '#6B6B6B',
     fontSize: 14,
+    marginBottom: 4,
   },
   addressDetail: {
     fontSize: 14,
     color: '#6B6B6B',
-    marginVertical: 4,
+    marginBottom: 4,
   },
   defaultTag: {
     fontSize: 12,
     color: '#069906',
+    fontWeight: '600',
     marginTop: 4,
   },
   editButton: {
     padding: 8,
   },
-  editButtonText: {
-    color: '#069906',
-    fontSize: 14,
-  },
-  divider: {
-    borderBottomWidth: 1,
-    borderColor: '#E0E0E0',
-    marginVertical: 12,
-  },
   addButton: {
+    flexDirection: 'row',
     backgroundColor: '#069906',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 20,
     marginBottom: 16,
+  },
+  addIcon: {
+    marginRight: 8,
   },
   addButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
+    fontWeight: '600',
   },
 });

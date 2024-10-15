@@ -1,10 +1,10 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Modal } from 'react-native';
 import React, { useState } from 'react';
-import { FontAwesome } from '@expo/vector-icons';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Modal } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SellerInfo() {
-  // Initial seller data
   const initialSellerInfo = {
     shopName: 'Viah Store',
     lastName: 'Saquing',
@@ -15,147 +15,91 @@ export default function SellerInfo() {
     address: 'Santa Maria, Isabela'
   };
 
-  const [shopName, setShopName] = useState(initialSellerInfo.shopName);
-  const [lastName, setLastName] = useState(initialSellerInfo.lastName);
-  const [firstName, setFirstName] = useState(initialSellerInfo.firstName);
-  const [midName, setMidName] = useState(initialSellerInfo.midName);
-  const [email, setEmail] = useState(initialSellerInfo.email);
-  const [phone, setPhone] = useState(initialSellerInfo.phone);
-  const [address, setAddress] = useState(initialSellerInfo.address);
-
-  const [modalVisible, setModalVisible] = useState(false); // State for managing modal visibility
-  const router = useRouter(); // Use the router from Expo Router
+  const [sellerInfo, setSellerInfo] = useState(initialSellerInfo);
+  const [modalVisible, setModalVisible] = useState(false);
+  const router = useRouter();
 
   const handleBackButtonPress = () => {
-    router.back(); // Go back to the previous screen
+    router.back();
   };
 
   const handleSaveButtonPress = () => {
-    // Handle saving the updated information here
-    console.log({ shopName, lastName, firstName, midName, email, phone, address });
-    setModalVisible(true); // Show the modal when info is saved
+    console.log(sellerInfo);
+    setModalVisible(true);
   };
 
   const handleCloseModal = () => {
-    setModalVisible(false); // Close the modal
+    setModalVisible(false);
   };
+
+  const updateField = (field, value) => {
+    setSellerInfo(prev => ({ ...prev, [field]: value }));
+  };
+
+  const infoFields = [
+    { icon: 'store', label: 'Shop Name', field: 'shopName' },
+    { icon: 'user', label: 'Last Name', field: 'lastName' },
+    { icon: 'user', label: 'First Name', field: 'firstName' },
+    { icon: 'user', label: 'Middle Name', field: 'midName' },
+    { icon: 'envelope', label: 'Email', field: 'email', keyboardType: 'email-address' },
+    { icon: 'phone', label: 'Phone Number', field: 'phone', keyboardType: 'phone-pad' },
+    { icon: 'map-marker-alt', label: 'Address', field: 'address' },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={['#069906', '#34D399']}
+        style={styles.header}
+      >
+        <TouchableOpacity style={styles.backButton} onPress={handleBackButtonPress}>
+          <FontAwesome5 name="arrow-left" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Seller Profile</Text>
+      </LinearGradient>
+
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackButtonPress}>
-            <FontAwesome name="arrow-left" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Seller Info</Text>
-        </View>
-
         <View style={styles.content}>
-          {/* Editable Info Fields */}
           <View style={styles.infoCard}>
-            <View style={styles.infoGroup}>
-              <FontAwesome name="shopping-cart" size={20} color="#069906" />
-              <Text style={styles.label}>Shop Name: </Text>
-              <TextInput
-                style={styles.input}
-                value={shopName}
-                onChangeText={setShopName}
-                placeholder="Enter Shop Name"
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="user" size={20} color="#069906" />
-              <Text style={styles.label}>Last Name: </Text>
-              <TextInput
-                style={styles.input}
-                value={lastName}
-                onChangeText={setLastName}
-                placeholder="Enter Last Name"
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="user" size={20} color="#069906" />
-              <Text style={styles.label}>First Name: </Text>
-              <TextInput
-                style={styles.input}
-                value={firstName}
-                onChangeText={setFirstName}
-                placeholder="Enter First Name"
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="user" size={20} color="#069906" />
-              <Text style={styles.label}>Middle Name: </Text>
-              <TextInput
-                style={styles.input}
-                value={midName}
-                onChangeText={setMidName}
-                placeholder="Enter Middle Name"
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="envelope" size={20} color="#069906" />
-              <Text style={styles.label}>Email: </Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Enter Email Address"
-                keyboardType="email-address"
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="phone" size={20} color="#069906" />
-              <Text style={styles.label}>Phone Number: </Text>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="Enter Phone Number"
-                keyboardType="phone-pad"
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            <View style={styles.infoGroup}>
-              <FontAwesome name="map-marker" size={20} color="#069906" />
-              <Text style={styles.label}>Address: </Text>
-              <TextInput
-                style={styles.input}
-                value={address}
-                onChangeText={setAddress}
-                placeholder="Enter Address"
-                placeholderTextColor="#999"
-              />
-            </View>
+            {infoFields.map((item, index) => (
+              <View key={index} style={styles.infoGroup}>
+                <FontAwesome5 name={item.icon} size={20} color="#069906" />
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>{item.label}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={sellerInfo[item.field]}
+                    onChangeText={(value) => updateField(item.field, value)}
+                    placeholder={`Enter ${item.label}`}
+                    placeholderTextColor="#999"
+                    keyboardType={item.keyboardType || 'default'}
+                  />
+                </View>
+              </View>
+            ))}
           </View>
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSaveButtonPress}>
-            <Text style={styles.saveButtonText}>Save Info</Text>
+            <LinearGradient
+              colors={['#069906', '#34D399']}
+              style={styles.saveButtonGradient}
+            >
+              <Text style={styles.saveButtonText}>Save Info</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* Modal for "Save successfully" */}
       <Modal
         transparent={true}
         visible={modalVisible}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={handleCloseModal}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalText}>Save successfully!</Text>
+            <FontAwesome5 name="check-circle" size={50} color="#069906" />
+            <Text style={styles.modalText}>Saved successfully!</Text>
             <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
               <Text style={styles.closeButtonText}>OK</Text>
             </TouchableOpacity>
@@ -171,88 +115,70 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f8f8',
   },
-  scrollContainer: {
-    padding: 16,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    padding: 16,
+    paddingTop: 40,
   },
   backButton: {
-    padding: 12,
-    backgroundColor: '#069906',
-    borderRadius: 50,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 3.84,
-    elevation: 5,
+    padding: 8,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#069906',
-    marginLeft: 12,
+    color: '#FFFFFF',
+    marginLeft: 16,
+  },
+  scrollContainer: {
+    flexGrow: 1,
   },
   content: {
-    flex: 1,
+    padding: 16,
   },
   infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginBottom: 20,
+    shadowRadius: 8,
+    elevation: 5,
   },
   infoGroup: {
-    marginBottom: 15,
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flex: 1,
+    marginLeft: 16,
   },
   label: {
-    fontSize: 18,
-    color: '#333',
-    fontWeight: 'bold',
-    marginLeft: 10,
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
   },
   input: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    marginLeft: 5,
-    flex: 1,
     fontSize: 16,
-    paddingVertical: 5,
     color: '#333',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    paddingVertical: 8,
   },
   saveButton: {
-    backgroundColor: '#069906',
-    paddingVertical: 14,
+    marginTop: 24,
     borderRadius: 12,
+    overflow: 'hidden',
+  },
+  saveButtonGradient: {
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#069906',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 5,
   },
   saveButtonText: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   modalContainer: {
@@ -262,24 +188,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 16,
     alignItems: 'center',
   },
   modalText: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginTop: 16,
+    marginBottom: 24,
   },
   closeButton: {
     backgroundColor: '#069906',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
   },
   closeButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: 'bold',
   },
 });
