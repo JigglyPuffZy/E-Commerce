@@ -1,12 +1,14 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, Image, Dimensions, Modal, RefreshControl, Animated, TextInput } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, Image, Dimensions, Modal, RefreshControl, Animated, TextInput, Platform } from 'react-native';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const initialOrders = [
   {
@@ -16,8 +18,8 @@ const initialOrders = [
     total: '₱150.00',
     status: 'Pending',
     items: 3,
-    image: 'https://example.com/product1.jpg',
-    key: '1',
+    image: 'https://via.placeholder.com/70',
+    proof: null,
   },
   {
     id: '2',
@@ -26,8 +28,8 @@ const initialOrders = [
     total: '₱200.00',
     status: 'Shipped',
     items: 5,
-    image: 'https://example.com/product2.jpg',
-    key: '2',
+    image: 'https://via.placeholder.com/70',
+    proof: null,
   },
   {
     id: '3',
@@ -36,8 +38,8 @@ const initialOrders = [
     total: '₱300.00',
     status: 'Delivered',
     items: 2,
-    image: 'https://example.com/product3.jpg',
-    key: '3',
+    image: 'https://via.placeholder.com/70',
+    proof: null,
   },
   {
     id: '4',
@@ -46,8 +48,8 @@ const initialOrders = [
     total: '₱250.00',
     status: 'Pending',
     items: 4,
-    image: 'https://example.com/product4.jpg',
-    key: '4',
+    image: 'https://via.placeholder.com/70',
+    proof: null,
   },
   {
     id: '5',
@@ -56,16 +58,18 @@ const initialOrders = [
     total: '₱180.00',
     status: 'Shipped',
     items: 2,
-    image: 'https://example.com/product5.jpg',
-    key: '5',
+    image: 'https://via.placeholder.com/70',
+    proof: null,
   },
 ];
 
 const SellerOrders = () => {
+  const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const [activeFilter, setActiveFilter] = useState('All');
   const [orders, setOrders] = useState(initialOrders);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,13 +77,14 @@ const SellerOrders = () => {
     totalOrders: 0,
     totalRevenue: 0,
   });
+  const [uploadingProof, setUploadingProof] = useState(false);
 
-  const filteredOrders = orders.filter(order => 
+  const filteredOrders = orders.filter(order =>
     (activeFilter === 'All' || order.status === activeFilter) &&
     (order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-     order.id.includes(searchQuery) ||
-     order.total.includes(searchQuery) ||
-     order.date.includes(searchQuery))
+      order.id.includes(searchQuery) ||
+      order.total.includes(searchQuery) ||
+      order.date.includes(searchQuery))
   );
 
   useEffect(() => {
@@ -104,11 +109,16 @@ const SellerOrders = () => {
       )
     );
     setModalVisible(false);
+    setShowConfirmationModal(false);
   };
 
   const openModal = (order) => {
     setSelectedOrder(order);
-    setModalVisible(true);
+    if (order.status === 'Pending') {
+      setShowConfirmationModal(true);
+    } else {
+      setModalVisible(true);
+    }
   };
 
   const onRefresh = useCallback(() => {
@@ -118,12 +128,31 @@ const SellerOrders = () => {
     }, 2000);
   }, []);
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const updatedOrders = orders.map(order => 
+        order.id === selectedOrder.id ? { ...order, proof: result.assets[0].uri } : order
+      );
+      setOrders(updatedOrders);
+      setUploadingProof(false);
+    } else {
+      setUploadingProof(false);
+    }
+  };
+
   const renderOrderItem = ({ item }) => {
     const scaleValue = new Animated.Value(1);
-    
+
     const onPressIn = () => {
       Animated.spring(scaleValue, {
-        toValue: 0.95,
+        toValue: 0.97,
         useNativeDriver: true,
       }).start();
     };
@@ -136,29 +165,39 @@ const SellerOrders = () => {
     };
 
     return (
-      <Animated.View style={[styles.orderCard, { transform: [{ scale: scaleValue }] }]}>
+      <Animated.View style={[styles.orderCard, { transform: [{ scale: scaleValue }] }]} >
         <TouchableOpacity
           onPress={() => openModal(item)}
           onPressIn={onPressIn}
           onPressOut={onPressOut}
-          activeOpacity={1}
+          activeOpacity={0.9}
         >
-          <Image source={{ uri: item.image }} style={styles.productImage} />
-          <View style={styles.orderInfo}>
-            <View style={styles.orderHeader}>
-              <Text style={styles.orderId}>Order #{item.id}</Text>
-              <Text style={styles.orderDate}>{item.date}</Text>
-            </View>
-            <Text style={styles.customerName}>{item.customerName}</Text>
-            <View style={styles.orderDetails}>
-              <Text style={styles.orderTotal}>{item.total}</Text>
-              <View style={[styles.orderStatusContainer, getStatusStyle(item.status)]}>
-                <Text style={styles.orderStatus}>{item.status}</Text>
+          <LinearGradient
+            colors={['#ffffff', '#f8f9fa']}
+            style={styles.orderCardContent}
+          >
+            <Image source={{ uri: item.image }} style={styles.productImage} />
+            <View style={styles.orderInfo}>
+              <View style={styles.orderHeader}>
+                <Text style={styles.orderId}>Order #{item.id}</Text>
+                <Text style={styles.orderDate}>{item.date}</Text>
               </View>
+              <Text style={styles.customerName}>{item.customerName}</Text>
+              <View style={styles.orderDetails}>
+                <Text style={styles.orderTotal}>{item.total}</Text>
+                <View style={[styles.orderStatusContainer, getStatusStyle(item.status)]}>
+                  <Text style={styles.orderStatus}>{item.status}</Text>
+                </View>
+              </View>
+              <Text style={styles.orderItems}>{item.items} items</Text>
+              {item.status === 'Delivered' && item.proof && (
+                <View style={styles.proofContainer}>
+                  <Text style={styles.proofText}>Proof of Delivery:</Text>
+                  <Image source={{ uri: item.proof }} style={styles.proofImage} />
+                </View>
+              )}
             </View>
-            <Text style={styles.orderItems}>{item.items} items</Text>
-          </View>
-          <MaterialCommunityIcons name="chevron-right" size={24} color="#069906" style={styles.icon} />
+          </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -175,106 +214,105 @@ const SellerOrders = () => {
     }
   };
 
-  const renderFilterButton = (label) => (
-    <TouchableOpacity
-      key={label}
-      style={[
-        styles.filterButton,
-        activeFilter === label && styles.activeFilterButton
-      ]}
-      onPress={() => handleFilterPress(label)}
-    >
-      <Text style={[
-        styles.filterButtonText,
-        activeFilter === label && styles.activeFilterButtonText
-      ]}>{label}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={[styles.container, colorScheme === 'dark' && styles.darkContainer]}>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+
       <LinearGradient
-        colors={colorScheme === 'dark' ? ['#1E1E1E', '#2A2A2A'] : ['#069906', '#3DBA4C']}
+        colors={['#4CAF50', '#2E7D32']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={styles.header}
       >
-        <Text style={styles.title}>Seller Orders</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.title}>My Orders</Text>
         <View style={styles.searchContainer}>
-          <MaterialCommunityIcons name="magnify" size={24} color={colorScheme === 'dark' ? '#FFFFFF' : '#069906'} />
+          <Ionicons name="search-outline" size={24} color="#666" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search orders..."
-            placeholderTextColor={colorScheme === 'dark' ? '#AAAAAA' : '#888888'}
+            placeholderTextColor="#999"
             value={searchQuery}
-            onChangeText={(text) => {
-              setSearchQuery(text);
-              setActiveFilter('All');
-            }}
+            onChangeText={setSearchQuery}
           />
         </View>
       </LinearGradient>
 
       <View style={styles.summaryContainer}>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Total Orders</Text>
-          <Text style={styles.summaryValue}>{summaryData.totalOrders}</Text>
-        </View>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Total Revenue</Text>
-          <Text style={styles.summaryValue}>₱{summaryData.totalRevenue}</Text>
-        </View>
-      </View>
-
-      <View style={styles.filterContainer}>
-        {['All', 'Pending', 'Shipped', 'Delivered', 'Cancel/Refund'].map(renderFilterButton)}
+        <LinearGradient
+          colors={['#ffffff', '#f8f9fa']}
+          style={styles.summaryGradient}
+        >
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Total Orders</Text>
+            <Text style={styles.summaryValue}>{summaryData.totalOrders}</Text>
+          </View>
+          <View style={styles.summaryDivider} />
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Total Revenue</Text>
+            <Text style={styles.summaryValue}>₱{summaryData.totalRevenue}</Text>
+          </View>
+        </LinearGradient>
       </View>
 
       <FlatList
         data={filteredOrders}
         renderItem={renderOrderItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.orderList}
-        showsVerticalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
 
       <Modal
+        visible={modalVisible}
         animationType="slide"
         transparent={true}
-        visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <BlurView intensity={100} style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Order Details</Text>
-            {selectedOrder && (
-              <>
-                <Text style={styles.modalText}>Order #{selectedOrder.id}</Text>
-                <Text style={styles.modalText}>Customer: {selectedOrder.customerName}</Text>
-                <Text style={styles.modalText}>Total: {selectedOrder.total}</Text>
-                <Text style={styles.modalText}>Status: {selectedOrder.status}</Text>
-              </>
-            )}
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Close</Text>
-              </TouchableOpacity>
-              {selectedOrder && selectedOrder.status === 'Pending' && (
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.confirmButton]}
-                  onPress={() => moveOrder(selectedOrder.id, 'Shipped')}
-                >
-                  <Text style={styles.modalButtonText}>Mark as Shipped</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Upload Proof of Delivery</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={pickImage}>
+              <Text style={styles.modalButtonText}>
+                {uploadingProof ? 'Uploading...' : 'Select Image'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: '#FF5733' }]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
-        </BlurView>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showConfirmationModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowConfirmationModal(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Are you sure you want to mark this order as delivered?</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => moveOrder(selectedOrder.id, 'Delivered')}
+            >
+              <Text style={styles.modalButtonText}>Yes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: '#FF5733' }]}
+              onPress={() => setShowConfirmationModal(false)}
+            >
+              <Text style={styles.modalButtonText}>No</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -283,217 +321,177 @@ const SellerOrders = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: '#fff',
   },
   darkContainer: {
-    backgroundColor: '#121212',
+    backgroundColor: '#333',
   },
   header: {
-    padding: 20,
-    paddingTop: 40,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    height: 150,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 10,
+    
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 15,
+    color: '#fff',
+    left:40,
   },
   searchContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    paddingHorizontal: 15,
-    marginTop: 10,
+    marginTop: 8,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   searchInput: {
+    marginLeft: 8,
+    fontSize: 16,
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    color: '#333333',
   },
   summaryContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 15,
-    backgroundColor: '#FFFFFF',
-    marginVertical: 15,
-    marginHorizontal: 10,
-    borderRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  summaryGradient: {
+    padding: 16,
+    borderRadius: 8,
   },
   summaryItem: {
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: '#888888',
-    marginBottom: 5,
-  },
-  summaryValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#069906',
-  },
-  filterContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    marginBottom: 15,
   },
-  filterButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 25,
-    backgroundColor: '#F0F4F8',
+  summaryLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  activeFilterButton: {
-    backgroundColor: '#069906',
+  summaryValue: {
+    fontSize: 16,
   },
-  filterButtonText: {
-    color: '#069906',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  activeFilterButtonText: {
-    color: '#FFFFFF',
-  },
-  orderList: {
-    padding: 15,
+  summaryDivider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 8,
   },
   orderCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    marginBottom: 15,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 12,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  orderCardContent: {
+    flexDirection: 'row',
+    padding: 16,
   },
   productImage: {
     width: 70,
     height: 70,
     borderRadius: 10,
-    marginRight: 15,
   },
   orderInfo: {
     flex: 1,
+    marginLeft: 16,
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 5,
   },
   orderId: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
   },
   orderDate: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#888',
   },
   customerName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#444',
-    marginBottom: 5,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 8,
   },
   orderDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
+    marginTop: 8,
   },
   orderTotal: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#069906',
   },
   orderStatusContainer: {
-    borderRadius: 12,
     paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
   },
   orderStatus: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontSize: 14,
+    color: '#fff',
   },
   pending: {
-    backgroundColor: '#FFA500',
+    backgroundColor: '#f39c12',
   },
   shipped: {
-    backgroundColor: '#4169E1',
+    backgroundColor: '#3498db',
   },
   delivered: {
-    backgroundColor: '#32CD32',
+    backgroundColor: '#2ecc71',
   },
   orderItems: {
     fontSize: 14,
-    color: '#666',
+    color: '#888',
+    marginTop: 4,
   },
-  icon: {
-    position: 'absolute',
-    right: 10,
-    top: '50%',
-    marginTop: -12,
+  proofContainer: {
+    marginTop: 8,
+    alignItems: 'center',
   },
-  modalOverlay: {
+  proofText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  proofImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  modalBackground: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+  modalContainer: {
+    width: width - 40,
     padding: 20,
-    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 8,
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#069906',
-  },
-  modalText: {
-    fontSize: 16,
-    marginBottom: 10,
+    marginBottom: 16,
     textAlign: 'center',
-    color: '#333',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 20,
   },
   modalButton: {
+    backgroundColor: '#4CAF50',
     paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    elevation: 2,
-  },
-  cancelButton: {
-    backgroundColor: '#F0F4F8',
-  },
-  confirmButton: {
-    backgroundColor: '#069906',
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 12,
+    alignItems: 'center',
   },
   modalButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontSize: 16,
+    color: '#fff',
   },
 });
 

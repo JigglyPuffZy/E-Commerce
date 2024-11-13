@@ -8,7 +8,7 @@ const initialPaymentData = [
   { id: '2', name: 'Item 2', price: '₱200.00', discountedPrice: '₱180.00', image: 'https://i.pinimg.com/236x/bd/2f/91/bd2f91891f7f4cb44da0473401273fd7.jpg', description: 'Banga ng Pusa', quantity: 1 },
 ];
 
-export default function ToPayScreen() {
+export default function ToProcessScreen() {
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
@@ -19,7 +19,7 @@ export default function ToPayScreen() {
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardHeaderText}>To Pay</Text>
+        <Text style={styles.cardHeaderText}>To Process</Text>
       </View>
       <View style={styles.itemContainer}>
         <Image source={{ uri: item.image }} style={styles.itemImage} />
@@ -67,7 +67,7 @@ export default function ToPayScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#ffffff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitleText}>To Pay</Text>
+        <Text style={styles.headerTitleText}>To Process</Text>
       </View>
       <FlatList
         data={paymentData}
@@ -243,28 +243,24 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     color: '#fff',
-    fontWeight: '600',
     marginLeft: 5,
   },
   summaryContainer: {
-    padding: 20,
+    marginTop: 30,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     backgroundColor: '#fff',
-    borderRadius: 15,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    marginBottom: 20,
+    borderRadius: 12,
+    elevation: 5,
   },
   summaryDetail: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 5,
+    marginBottom: 15,
   },
   summaryLabelText: {
     fontSize: 16,
-    color: '#333',
+    color: '#555',
   },
   summaryValueText: {
     fontSize: 16,
@@ -274,7 +270,7 @@ const styles = StyleSheet.create({
   totalText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#069906',
+    color: '#33A853',
   },
   modalBackdrop: {
     flex: 1,
@@ -283,22 +279,23 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    width: '80%',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
+    width: '80%',
     elevation: 5,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontWeight: '600',
     color: '#333',
+    marginBottom: 15,
+    textAlign: 'center',
   },
   reasonOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    marginBottom: 10,
   },
   reasonText: {
     fontSize: 16,
@@ -308,27 +305,25 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 15,
   },
   modalButtonYes: {
-    backgroundColor: '#069906',
-    padding: 10,
-    borderRadius: 5,
     flex: 1,
-    marginRight: 5,
+    paddingVertical: 12,
+    backgroundColor: '#069906',
+    borderRadius: 8,
+    marginRight: 10,
     alignItems: 'center',
   },
   modalButtonNo: {
-    backgroundColor: '#FF0000',
-    padding: 10,
-    borderRadius: 5,
     flex: 1,
-    marginLeft: 5,
+    paddingVertical: 12,
+    backgroundColor: '#FF0000',
+    borderRadius: 8,
+    marginLeft: 10,
     alignItems: 'center',
   },
   modalButtonText: {
+    fontSize: 16,
     color: '#fff',
-    fontWeight: '600',
   },
 });
-

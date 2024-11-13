@@ -12,7 +12,7 @@ export default function UserProfile() {
   const [fullImageUri, setFullImageUri] = useState(''); // State for full-screen image URI
 
   const options = [
-    { id: '1', title: 'Pay', icon: 'wallet', description: 'Manage Payments', count: 3, IconComponent: Entypo },
+    { id: '1', title: 'Process', icon: 'wallet', description: 'Processing', count: 3, IconComponent: Entypo },
     { id: '2', title: 'Ship', icon: 'truck', description: 'Track Shipments', count: 5, IconComponent: FontAwesome5 },
     { id: '3', title: 'Receive', icon: 'box', description: 'Manage Receipts', count: 7, IconComponent: Feather },
     { id: '4', title: 'Rate', icon: 'star', description: 'Leave Feedback', count: 12, IconComponent: FontAwesome },
