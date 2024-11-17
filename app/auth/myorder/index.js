@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, Image, Dimensions, Modal, RefreshControl, Animated, TextInput, Platform } from 'react-native';
-import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, SafeAreaView, Image, Dimensions, Modal, RefreshControl, Animated } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
@@ -39,7 +39,7 @@ const initialOrders = [
     status: 'Delivered',
     items: 2,
     image: 'https://via.placeholder.com/70',
-    proof: null,
+    proof: 'https://via.placeholder.com/150',
   },
   {
     id: '4',
@@ -72,19 +72,16 @@ const SellerOrders = () => {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [summaryData, setSummaryData] = useState({
     totalOrders: 0,
     totalRevenue: 0,
   });
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [imageSelected, setImageSelected] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const filteredOrders = orders.filter(order =>
-    (activeFilter === 'All' || order.status === activeFilter) &&
-    (order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.id.includes(searchQuery) ||
-      order.total.includes(searchQuery) ||
-      order.date.includes(searchQuery))
+    (activeFilter === 'All' || order.status === activeFilter)
   );
 
   useEffect(() => {
@@ -99,7 +96,6 @@ const SellerOrders = () => {
 
   const handleFilterPress = (filter) => {
     setActiveFilter(filter);
-    setSearchQuery('');
   };
 
   const moveOrder = (orderId, newStatus) => {
@@ -116,7 +112,7 @@ const SellerOrders = () => {
     setSelectedOrder(order);
     if (order.status === 'Pending') {
       setShowConfirmationModal(true);
-    } else {
+    } else if (order.status === 'Shipped') {
       setModalVisible(true);
     }
   };
@@ -137,13 +133,23 @@ const SellerOrders = () => {
     });
 
     if (!result.canceled) {
-      const updatedOrders = orders.map(order => 
+      const updatedOrders = orders.map(order =>
         order.id === selectedOrder.id ? { ...order, proof: result.assets[0].uri } : order
       );
       setOrders(updatedOrders);
-      setUploadingProof(false);
+      setImageSelected(true);
+      setErrorMessage('');
     } else {
-      setUploadingProof(false);
+      setImageSelected(false);
+    }
+  };
+
+  const handleSendClick = () => {
+    if (!imageSelected) {
+      setErrorMessage('Please upload an image before sending.');
+    } else {
+      moveOrder(selectedOrder.id, 'Delivered');
+      setModalVisible(false);
     }
   };
 
@@ -165,7 +171,7 @@ const SellerOrders = () => {
     };
 
     return (
-      <Animated.View style={[styles.orderCard, { transform: [{ scale: scaleValue }] }]} >
+      <Animated.View style={[styles.orderCard, { transform: [{ scale: scaleValue }] }]}>
         <TouchableOpacity
           onPress={() => openModal(item)}
           onPressIn={onPressIn}
@@ -228,16 +234,6 @@ const SellerOrders = () => {
           <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>My Orders</Text>
-        <View style={styles.searchContainer}>
-          <Ionicons name="search-outline" size={24} color="#666" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search orders..."
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
       </LinearGradient>
 
       <View style={styles.summaryContainer}>
@@ -261,237 +257,316 @@ const SellerOrders = () => {
         data={filteredOrders}
         renderItem={renderOrderItem}
         keyExtractor={(item) => item.id}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       />
 
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalBackground}>
+      {selectedOrder && (
+        <Modal visible={modalVisible} animationType="slide">
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Upload Proof of Delivery</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={pickImage}>
-              <Text style={styles.modalButtonText}>
-                {uploadingProof ? 'Uploading...' : 'Select Image'}
-              </Text>
+            <Text style={styles.modalMessage}>Please upload the proof of delivery image.</Text>
+            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+            <TouchableOpacity onPress={pickImage} style={styles.uploadButton}>
+              <Text style={styles.uploadButtonText}>Upload Image</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: '#FF5733' }]}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.modalButtonText}>Cancel</Text>
-            </TouchableOpacity>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                onPress={handleSendClick}
+                disabled={!imageSelected}
+                style={[
+                  styles.sendButton,
+                  { backgroundColor: imageSelected ? '#069906' : '#cccccc' },
+                ]}
+              >
+                <Text style={styles.sendButtonText}>Send</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={styles.cancelButton}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
 
-      <Modal
-        visible={showConfirmationModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowConfirmationModal(false)}
-      >
-        <View style={styles.modalBackground}>
+      {showConfirmationModal && selectedOrder && (
+        <Modal visible={showConfirmationModal} animationType="slide">
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Are you sure you want to mark this order as delivered?</Text>
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => moveOrder(selectedOrder.id, 'Delivered')}
-            >
-              <Text style={styles.modalButtonText}>Yes</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: '#FF5733' }]}
-              onPress={() => setShowConfirmationModal(false)}
-            >
-              <Text style={styles.modalButtonText}>No</Text>
-            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Confirm Order Status</Text>
+            <Text style={styles.modalMessage}>Are you sure you want to mark this order as Shipped?</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                onPress={() => moveOrder(selectedOrder.id, 'Shipped')}
+                style={styles.sendButton}
+              >
+                <Text style={styles.sendButtonText}>Yes, Mark as Shipped</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowConfirmationModal(false)}
+                style={styles.cancelButton}
+              >
+                <Text style={styles.cancelButtonText}>No, Keep Pending</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f9f9f9',
+    padding: 20,
   },
   darkContainer: {
-    backgroundColor: '#333',
+    backgroundColor: '#222',
   },
   header: {
-    height: 150,
-    justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingTop: 40,
   },
   backButton: {
     position: 'absolute',
-    top: 60,
-    left: 10,
-    
+    left: 20,
+    top: 40,
+    padding: 12,
+    borderRadius: 30,
+    backgroundColor: '#333',
+    elevation: 3,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
     color: '#fff',
-    left:40,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    marginTop: 8,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  searchInput: {
-    marginLeft: 8,
-    fontSize: 16,
-    flex: 1,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    marginTop: 5,
   },
   summaryContainer: {
-    marginTop: 16,
-    paddingHorizontal: 16,
+    marginHorizontal: 15,
+    paddingVertical: 20,
   },
   summaryGradient: {
-    padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
+    padding: 25,
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
   summaryItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginVertical: 8,
   },
   summaryLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#888',
+    fontFamily: 'Inter',
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 18,
+    color: '#333',
+    fontWeight: '600',
   },
   summaryDivider: {
     height: 1,
-    backgroundColor: '#e0e0e0',
-    marginVertical: 8,
+    backgroundColor: '#ddd',
+    marginVertical: 15,
+    opacity: 0.7,
   },
   orderCard: {
-    marginBottom: 12,
-    borderRadius: 10,
+    marginBottom: 20,
+    borderRadius: 15,
     overflow: 'hidden',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   orderCardContent: {
     flexDirection: 'row',
-    padding: 16,
+    padding: 20,
+    alignItems: 'center',
   },
   productImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 10,
+    width: 90,
+    height: 90,
+    borderRadius: 15,
+    marginRight: 20,
+    borderWidth: 2,
+    borderColor: '#f0f0f0',
   },
   orderInfo: {
     flex: 1,
-    marginLeft: 16,
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 12,
   },
   orderId: {
+    fontWeight: '700',
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#333',
   },
   orderDate: {
+    color: '#777',
     fontSize: 14,
-    color: '#888',
   },
   customerName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 8,
+    fontWeight: '600',
+    fontSize: 20,
+    marginVertical: 5,
+    color: '#333',
   },
   orderDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginVertical: 8,
   },
   orderTotal: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#069906',
+    fontWeight: '600',
   },
   orderStatusContainer: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 100,
+    backgroundColor: '#2196F3',
   },
   orderStatus: {
-    fontSize: 14,
     color: '#fff',
-  },
-  pending: {
-    backgroundColor: '#f39c12',
-  },
-  shipped: {
-    backgroundColor: '#3498db',
-  },
-  delivered: {
-    backgroundColor: '#2ecc71',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    fontSize: 14,
   },
   orderItems: {
-    fontSize: 14,
-    color: '#888',
-    marginTop: 4,
+    fontSize: 16,
+    color: '#555',
   },
   proofContainer: {
-    marginTop: 8,
+    marginTop: 20,
+    flexDirection: 'row',
     alignItems: 'center',
   },
   proofText: {
-    fontSize: 14,
-    color: '#555',
+    fontSize: 15,
+    color: '#777',
   },
   proofImage: {
-    width: 100,
-    height: 100,
+    width: 60,
+    height: 60,
     borderRadius: 8,
-    marginTop: 8,
+    marginLeft: 15,
+    borderWidth: 2,
+    borderColor: '#f0f0f0',
   },
-  modalBackground: {
+  delivered: {
+    backgroundColor: '#4CAF50',
+  },
+  shipped: {
+    backgroundColor: '#FF9800',
+  },
+  pending: {
+    backgroundColor: '#2196F3',
+  },
+
+  // Updated modal styles
+  modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)', // Subtle transparent overlay
   },
-  modalContainer: {
-    width: width - 40,
-    padding: 20,
+  modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 20,
+    padding: 30,
     alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,  // Add slight shadow to elevate the modal
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 15,
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: '#333',
+    marginVertical: 15,
     textAlign: 'center',
   },
-  modalButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 12,
-    alignItems: 'center',
+  errorText: {
+    color: 'red',
+    fontSize: 15,
+    marginTop: 10,
+    textAlign: 'center',
   },
-  modalButtonText: {
-    fontSize: 16,
+  uploadButton: {
+    backgroundColor: '#069906',
+    paddingVertical: 14,
+    borderRadius: 50,
+    marginVertical: 25,
+    alignItems: 'center',
+    elevation: 4,
+    width: '100%',
+  },
+  uploadButtonText: {
     color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  sendButton: {
+    backgroundColor: '#069906',
+    paddingVertical: 15,
+    paddingHorizontal: 35,
+    borderRadius: 10,
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 5,
+    elevation: 2,
+  },
+  sendButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    backgroundColor: '#cccccc',
+    paddingVertical: 15,
+    paddingHorizontal: 35,
+    borderRadius: 10,
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 5,
+    elevation: 2,
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 
